@@ -1,0 +1,2619 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Maltese Pacer">
+<title>The Maltese Pacer</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏃</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<script>
+/* Vzhľad: režim (svetlý / tmavý / systém) a farba pozadia, uložené v tomto zariadení */
+window.MP_BG = [
+  { id:'sea',      sk:'Morská hmla', en:'Sea mist',  light:{ bg:'#EDF3F4', line:'#CFDDE2' }, dark:{ bg:'#08202D', surface:'#0F2E3F', line:'#1F4558' } },
+  { id:'graphite', sk:'Grafit',      en:'Graphite',  light:{ bg:'#F4F5F7', line:'#D9DCE1' }, dark:{ bg:'#121417', surface:'#1C1F24', line:'#2E333A' } },
+  { id:'sand',     sk:'Piesok',      en:'Sand',      light:{ bg:'#F3EFE6', line:'#E0D8C8' }, dark:{ bg:'#1D1A14', surface:'#29251D', line:'#3D372B' } },
+  { id:'sage',     sk:'Šalvia',      en:'Sage',      light:{ bg:'#ECF2EC', line:'#D2DFD3' }, dark:{ bg:'#111C15', surface:'#1A2920', line:'#2A3D30' } },
+  { id:'lavender', sk:'Levanduľa',   en:'Lavender',  light:{ bg:'#F0EEF8', line:'#DAD5EC' }, dark:{ bg:'#16142A', surface:'#211E3A', line:'#332E52' } },
+  { id:'rose',     sk:'Ruža',        en:'Rose',      light:{ bg:'#F8EDF0', line:'#EBD3DA' }, dark:{ bg:'#22141A', surface:'#301C24', line:'#482A36' } },
+  { id:'sky',      sk:'Obloha',      en:'Sky',       light:{ bg:'#E9F1FB', line:'#CFDDF0' }, dark:{ bg:'#0D1828', surface:'#152439', line:'#243957' } },
+  { id:'peach',    sk:'Broskyňa',    en:'Peach',     light:{ bg:'#FAEEE6', line:'#EED6C6' }, dark:{ bg:'#23170F', surface:'#321F15', line:'#4A2F21' } }
+];
+window.mpApplyTheme = function(){
+  var mode = 'system', bg = 'sea';
+  try{ mode = localStorage.getItem('mp-theme') || 'system'; bg = localStorage.getItem('mp-bg') || 'sea'; }catch(e){}
+  var dark = mode === 'dark' || (mode === 'system' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+  var r = document.documentElement; r.setAttribute('data-theme', dark ? 'dark' : 'light');
+  var p = window.MP_BG.filter(function(x){ return x.id === bg; })[0] || window.MP_BG[0];
+  var v = dark ? p.dark : p.light;
+  r.style.setProperty('--bg', v.bg); r.style.setProperty('--line', v.line);
+  r.style.setProperty('--surface', dark ? v.surface : '#FFFFFF');
+  return { mode: mode, bg: p.id, dark: dark };
+};
+window.mpApplyTheme();
+if(window.matchMedia){ var mq = matchMedia('(prefers-color-scheme: dark)'); var f = function(){ window.mpApplyTheme(); if(window.mpOnTheme) window.mpOnTheme(); }; if(mq.addEventListener) mq.addEventListener('change', f); else if(mq.addListener) mq.addListener(f); }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script>
+<style>
+:root{
+  --bg:#EDF3F4; --surface:#FFFFFF; --ink:#0E2738; --muted:#48626F; --line:#CFDDE2;
+  --sea:#1A6A8A; --sea-soft:#D5E8EF; --luzzu:#F0B400; --red:#C2302A; --busy:#C9D6DC; --busy-ink:#2E4756;
+  --hero:#0E2738; --hero-ink:#FFFFFF; --hero-muted:#B9CDD6; --hero-accent:#FFC72C;
+  --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light; box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){ --bg:#08202D; --surface:#0F2E3F; --ink:#E6F0F3; --muted:#9BB4C1; --line:#1F4558;
+    --sea:#5BB4D6; --sea-soft:#14394C; --luzzu:#FFC72C; --red:#FF6B5E; --busy:#2A4A5C; --busy-ink:#D6E3E9;
+    --hero:#123A50; --hero-ink:#FFFFFF; --hero-muted:#B9CDD6; --hero-accent:#FFC72C; color-scheme:dark; }
+}
+:root[data-theme="dark"]{ --bg:#08202D; --surface:#0F2E3F; --ink:#E6F0F3; --muted:#9BB4C1; --line:#1F4558;
+    --sea:#5BB4D6; --sea-soft:#14394C; --luzzu:#FFC72C; --red:#FF6B5E; --busy:#2A4A5C; --busy-ink:#D6E3E9;
+    --hero:#123A50; --hero-ink:#FFFFFF; --hero-muted:#B9CDD6; --hero-accent:#FFC72C; color-scheme:dark; }
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.45}
+main{max-width:560px;margin:0 auto;padding:20px 18px calc(110px + env(safe-area-inset-bottom,0px))}
+[hidden]{display:none!important}
+
+.brand{font-family:var(--display);font-weight:600;font-size:18px;color:var(--sea)}
+h1{font-family:var(--display);font-weight:700;font-size:38px;line-height:1;margin:0;letter-spacing:-.3px}
+h1.hero{font-size:46px;line-height:.95}
+h2{font-family:var(--display);font-size:24px;font-weight:600;margin:0}
+.sub{color:var(--muted);margin:6px 0 0;font-size:15px}
+.stack{display:flex;flex-direction:column;gap:14px}
+.between{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+section.tab{display:flex;flex-direction:column;gap:16px}
+
+button{font:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--sea);outline-offset:2px}
+.link{background:none;border:0;color:var(--sea);padding:8px 0;font-weight:500;min-height:44px;text-align:left}
+.ghost{background:none;border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:0 14px;min-height:44px}
+.primary{width:100%;min-height:50px;border:0;border-radius:12px;background:var(--luzzu);color:#1A1400;font-weight:600;font-size:18px}
+.primary:disabled,.ghost:disabled{opacity:.5;cursor:default}
+.dashed{min-height:48px;border:1px dashed var(--sea);border-radius:12px;background:none;color:var(--sea);font-weight:600}
+.danger{color:var(--red);border-color:var(--red)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px}
+label,.lbl{display:block;font-size:14px;color:var(--muted);margin-bottom:4px}
+input,select{width:100%;min-width:0;max-width:100%;display:block;font:inherit;font-size:17px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 11px;min-height:46px}
+input[type=date],input[type=time]{-webkit-appearance:none;appearance:none;text-align:left}
+input[type=date]::-webkit-date-and-time-value,input[type=time]::-webkit-date-and-time-value{text-align:left}
+input:focus,select:focus{outline:2px solid var(--sea);outline-offset:1px;border-color:transparent}
+.row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.row>div{min-width:0}
+.time3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.time3 input{text-align:center}
+.wheels{position:relative;display:flex;align-items:flex-start;justify-content:center;gap:2px;background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:6px 8px 4px}
+.wheels::before{content:"";position:absolute;left:8px;right:8px;top:calc(6px + 68px);height:34px;background:var(--sea-soft);border-radius:9px;pointer-events:none}
+.wcol{position:relative;display:flex;flex-direction:column;align-items:center;z-index:1}
+.wheel{height:170px;width:64px;overflow-y:scroll;scroll-snap-type:y mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;box-sizing:border-box;
+  -webkit-mask-image:linear-gradient(to bottom,transparent,#000 30%,#000 70%,transparent);mask-image:linear-gradient(to bottom,transparent,#000 30%,#000 70%,transparent);outline:none;border-radius:8px}
+.wheel::-webkit-scrollbar{display:none}
+.wheel .sp{height:68px}
+.wheel:focus-visible{box-shadow:0 0 0 3px var(--sea)}
+.wheel .it{height:34px;line-height:34px;text-align:center;scroll-snap-align:center;font-family:var(--display);font-size:24px;color:var(--muted);cursor:pointer;user-select:none;-webkit-user-select:none}
+.wheel .it.sel{color:var(--ink);font-weight:700}
+.wunit{font-size:13px;color:var(--muted);margin-top:2px}
+.tfield{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:46px;padding:10px 12px;background:var(--bg);border:1px solid var(--line);border-radius:10px;font:inherit;font-size:17px;color:var(--ink);cursor:pointer;text-align:left}
+.thumb{display:block;margin-top:6px;width:132px;height:99px;object-fit:cover;border-radius:10px;cursor:pointer;background:var(--line);border:0;padding:0}
+.thumb img{width:100%;height:100%;object-fit:cover;border-radius:10px;display:block}
+.photo-full{width:100%;height:auto;border-radius:12px;display:block}
+.sr-only{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0)}
+.photoRow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.photoPick{display:inline-flex;align-items:center;gap:8px;cursor:pointer;color:var(--sea);font-weight:600}
+.tfield .v{font-variant-numeric:tabular-nums;font-weight:600}
+.tfield .u{color:var(--muted);font-size:14px}
+.tfield:focus-visible{outline:3px solid var(--sea);outline-offset:2px}
+.wsep{font-family:var(--display);font-size:24px;font-weight:700;align-self:flex-start;margin-top:68px;line-height:34px;z-index:1}
+.msg{min-height:20px;font-size:14px;color:var(--red);margin:6px 0 0}
+.ok{color:var(--sea)}
+.hint{font-size:14px;color:var(--muted);margin:0}
+.inline{display:flex;flex-wrap:wrap;gap:8px}
+.inline input{flex:1 1 160px}
+
+.pills{display:grid;gap:6px}
+.pills.p4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.pills.p5{grid-template-columns:repeat(5,minmax(0,1fr))}
+.pills.p7{grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.pill{min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:0 2px;font-size:15px}
+.pill[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink);font-weight:600}
+.p7 .pill[aria-pressed="true"]{background:var(--sea);border-color:var(--sea);color:#fff}
+.seg{display:inline-flex;align-self:flex-start;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{border:0;background:var(--surface);color:var(--ink);padding:0 14px;min-height:42px;font-size:15px}
+.seg button[aria-pressed="true"]{background:var(--sea);color:#fff;font-weight:600}
+
+/* phases */
+.phasebar{display:grid;gap:3px;height:8px}
+.phasebar div{border-radius:4px;background:var(--line)}
+.phasebar div.on{background:var(--sea)}
+.phaselbl{display:grid;gap:3px;font-size:13px;color:var(--muted)}
+.phaselbl .on{color:var(--ink);font-weight:600}
+
+/* hero workout */
+.today{background:var(--hero);color:var(--hero-ink);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.today .when{font-size:15px;color:var(--hero-muted)}
+.today .big{font-family:var(--display);font-size:30px;font-weight:700;line-height:1}
+.today .km{font-family:var(--display);font-size:28px;font-weight:600}
+.today .seg-row{display:flex;justify-content:space-between;gap:10px;font-size:15px}
+.today .seg-row span:last-child{color:var(--hero-muted);white-space:nowrap}
+.today .seg-row.key span{font-weight:600}
+.today .seg-row.key span:last-child{color:var(--hero-accent)}
+.today .btns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:4px}
+.today .btns .alt{min-height:46px;border:1px solid #3D5B6D;border-radius:10px;background:transparent;color:#fff}
+.today .btns .primary{min-height:46px;font-size:17px}
+
+/* week list */
+.week{display:flex;flex-direction:column}
+.wday{display:flex;align-items:center;gap:12px;padding:10px;border-bottom:1px solid var(--line);font-size:15px}
+.wday.is-today{background:var(--surface);border-radius:10px;border-bottom-color:transparent}
+.wday .d{font-weight:600;width:28px;flex:none}
+.wday .t{display:flex;flex-direction:column;flex-grow:1;min-width:0}
+.wday .t span:first-child{font-weight:600}
+.wday .t span:last-child{font-size:13px;color:var(--muted)}
+.wday.quiet .t span:first-child{font-weight:400;color:var(--muted)}
+.badge{font-size:12px;font-weight:600;padding:3px 8px;border-radius:999px;white-space:nowrap}
+.b-today{background:var(--luzzu);color:#1A1400}
+.b-done{background:var(--sea);color:#fff}
+.b-block{background:var(--busy);color:var(--busy-ink)}
+.b-key{background:var(--sea-soft);color:var(--ink)}
+.weeknav{display:flex;justify-content:space-between;align-items:center}
+.weeknav button{min-width:44px}
+
+/* calendar grid */
+.legend{display:flex;gap:14px;font-size:13px;color:var(--muted)}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend i{width:14px;height:14px;border-radius:3px;display:inline-block}
+.grid-head,.grid-body{display:grid;grid-template-columns:28px repeat(7,minmax(0,1fr));gap:4px}
+.grid-head{font-size:13px;font-weight:600;text-align:center;margin-bottom:6px}
+.col{position:relative;height:306px;background:var(--bg);border-radius:6px}
+.hours{position:relative;height:306px;font-size:11px;color:var(--muted)}
+.hours span{position:absolute;right:2px}
+.blk{position:absolute;left:2px;right:2px;border-radius:5px;font-size:10px;font-weight:600;line-height:1.1;padding:3px 2px;overflow:hidden;text-align:center}
+.blk.busy{background:var(--busy);color:var(--busy-ink)}
+.blk.run{background:var(--luzzu);color:#1A1400}
+.blk.off{background:repeating-linear-gradient(45deg,var(--busy),var(--busy) 4px,transparent 4px,transparent 8px)}
+.item{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:15px}
+.item div{display:flex;flex-direction:column;min-width:0}
+.item div span:first-child{font-weight:600}
+.item div span:last-child{font-size:13px;color:var(--muted)}
+.del{background:none;border:1px solid var(--line);color:var(--muted);border-radius:10px;min-width:44px;min-height:44px;font-size:14px;padding:0 10px}
+.del.armed{border-color:var(--red);color:var(--red)}
+.banner{background:var(--sea-soft);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:15px}
+
+/* groups */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:40px;padding:6px 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-weight:500}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip.add{border-style:dashed;color:var(--sea)}
+.board{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.board li{display:block;padding:0;border-radius:12px;background:var(--surface);border:1px solid var(--line);overflow:hidden}
+.rowbtn{display:flex;align-items:center;gap:12px;padding:12px;width:100%;background:none;border:0;font:inherit;color:inherit;text-align:left;cursor:pointer}
+#pForm h3{font-family:var(--display);font-size:20px;font-weight:600;margin:0}
+#pForm{display:flex;flex-direction:column;gap:6px}
+.feed{display:flex;flex-direction:column}
+.swatches{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.swatches.bgs{grid-template-columns:repeat(4,minmax(0,1fr))}
+.swatches.bgs .sw{min-height:52px;border:1px solid var(--line);display:flex;align-items:flex-end;justify-content:center;font-size:12px;padding:4px;font:inherit;font-size:12px}
+.swatches.bgs .sw[aria-pressed="true"]{border:3px solid var(--sea);box-shadow:none}
+.sw{min-height:44px;border-radius:12px;border:3px solid transparent;cursor:pointer;padding:0}
+.sw[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 3px var(--surface)}
+.nm{display:inline-flex;align-items:center;gap:6px;min-width:0}
+.mhead,.mgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.mhead{font-size:13px;font-weight:600;text-align:center;color:var(--muted)}
+.mday{min-height:60px;border-radius:10px;background:var(--surface);border:1px solid var(--line);padding:4px;display:flex;flex-direction:column;align-items:flex-start;gap:3px;font:inherit;color:inherit;cursor:pointer;text-align:left;min-width:0}
+.mday.out{opacity:.45}
+.mday.today{border:2px solid var(--sea)}
+.mday .n{font-size:13px;font-weight:600;line-height:1}
+.mday .dots{display:flex;flex-wrap:wrap;gap:3px}
+.dot{width:10px;height:10px;border-radius:50%;border:1px solid rgba(0,0,0,.3);display:inline-block;flex:none}
+.mine{width:10px;height:10px;border-radius:50%;border:2px solid var(--luzzu);display:inline-block;flex:none}
+.ring{width:10px;height:10px;border-radius:50%;border:2px solid var(--muted);display:inline-block;flex:none;box-sizing:border-box;background:transparent}
+.dot.pale{opacity:.3}
+@supports (background: color-mix(in srgb, red 50%, white)){
+  .dot.pale{opacity:1;background:color-mix(in srgb, var(--c) 30%, var(--surface)) !important;border:1.5px solid var(--c);box-sizing:border-box}
+}
+.mkeys{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted)}
+.mkeys span{display:flex;align-items:center;gap:6px}
+.mday .more{font-size:10px;color:var(--muted);line-height:10px}
+.mday .dkm{font-size:10px;color:var(--muted);margin-top:auto;white-space:nowrap}
+.mlegend{display:flex;flex-direction:column;gap:6px;font-size:15px}
+.mlegend span.it{display:flex;align-items:center;gap:8px}
+.mlegend .v{color:var(--muted);margin-left:auto;white-space:nowrap}
+.mrow{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line);width:100%;background:none;border-left:0;border-right:0;border-top:0;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.mrow .dot,.mrow .ring{margin-top:5px}
+.mrow .chev{color:var(--muted);font-size:20px;line-height:1;align-self:center}
+.mrow .body{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.mrow .body span{font-size:14px;color:var(--muted);overflow-wrap:anywhere}
+.mrow .body strong{font-size:16px}
+#gCoast svg{display:block;width:100%;height:auto}
+.glegend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px;margin-top:6px}
+.glegend span{display:flex;align-items:center;gap:6px}
+.glegend i{width:16px;height:16px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-size:10px;font-weight:700;border:1px solid var(--ink)}
+.feed .run{grid-template-columns:auto 1fr auto}
+.feed .who{font-weight:600}
+.board li.me{border:2px solid var(--luzzu)}
+.board .pos{font-family:var(--display);font-size:22px;font-weight:600;color:var(--muted);width:20px;text-align:center;flex:none}
+.board .body{display:flex;flex-direction:column;gap:5px;flex-grow:1;min-width:0}
+.board .name{font-weight:600;overflow-wrap:anywhere}
+.board .val{font-family:var(--display);font-size:24px;font-weight:700;line-height:1;white-space:nowrap}
+.board .detail{font-size:13px;color:var(--muted)}
+.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.bar div{height:6px;border-radius:3px;background:var(--sea)}
+.board li.me .bar div{background:var(--luzzu)}
+.invite{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:15px}
+.invite code{font-family:var(--display);font-size:22px;letter-spacing:1px;color:var(--ink)}
+
+/* runs */
+.coast svg{display:block;width:100%;height:auto}
+.coast-label{display:flex;justify-content:space-between;align-items:baseline;margin-top:6px}
+.coast-label strong{font-family:var(--display);font-size:30px;font-weight:600}
+.coast-label span{color:var(--muted);font-size:14px}
+@media (prefers-reduced-motion:no-preference){ #runner{transition:transform .8s ease} }
+.pace{display:flex;align-items:baseline;gap:10px;padding-top:12px;border-top:1px dashed var(--line)}
+.pace output{font-family:var(--display);font-size:46px;font-weight:700;line-height:1;color:var(--sea)}
+.pace span{color:var(--muted)}
+.runs{list-style:none;margin:0;padding:0}
+.run{display:grid;grid-template-columns:auto 1fr auto;gap:4px 14px;align-items:center;padding:14px 0;border-bottom:1px solid var(--line)}
+.run .km{font-family:var(--display);font-size:32px;font-weight:600;line-height:1;min-width:76px}
+.run .km small{font-size:16px;color:var(--muted);font-weight:500;margin-left:2px}
+.run .meta div:first-child{font-weight:600}
+.run .meta div+div{color:var(--muted);font-size:14px;overflow-wrap:anywhere}
+.empty{color:var(--muted);padding:12px 0;margin:0}
+
+/* bottom nav */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:10;background:var(--surface);border-top:1px solid var(--line);padding:6px 6px calc(10px + env(safe-area-inset-bottom,0px))}
+nav.tabs div{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(5,minmax(0,1fr))}
+nav.tabs button{border:0;background:none;color:var(--muted);font-size:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:52px}
+nav.tabs button[aria-current="page"]{color:var(--sea);font-weight:600}
+
+/* jazyk, zdieľanie, oznámenia */
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.lang{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.lang button{border:0;background:var(--surface);color:var(--ink);min-width:44px;min-height:40px;font-size:14px;font-weight:600}
+.lang button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.run .acts{display:flex;gap:6px}
+.share{background:none;border:1px solid var(--line);color:var(--sea);border-radius:10px;min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 10px;font-size:14px;font-weight:600}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:20;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:15px;max-width:90vw;text-align:center}
+.notice{background:var(--sea-soft);border-radius:12px;padding:12px;font-size:15px}
+button.wday{width:100%;text-align:left;font:inherit;color:inherit;background:none;border:0;border-bottom:1px solid var(--line);cursor:pointer}
+.wday .chev{color:var(--muted);font-size:20px;line-height:1;flex:none}
+button.blk{border:0;font:inherit;font-size:10px;font-weight:600;cursor:pointer}
+dialog.sheet{border:0;padding:0;margin:auto auto 0;width:100%;max-width:560px;max-height:88vh;border-radius:20px 20px 0 0;background:var(--surface);color:var(--ink);overflow:auto}
+dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
+.sheet-in{padding:20px 18px calc(24px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px}
+.sheet-in h2{font-size:30px;line-height:1}
+.sheet-in h3{font-family:var(--display);font-size:20px;font-weight:600;margin:0 0 4px}
+.sheet-in p{margin:0}
+.sheet-in ul,.sheet-in ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{background:var(--sea-soft);color:var(--ink);border-radius:999px;padding:4px 10px;font-size:14px;font-weight:600}
+.sheet-btns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+
+/* načítavanie: silueta bežca s prechádzajúcim odleskom */
+.loader{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:28px 0;color:var(--muted);font-size:14px;grid-column:1/-1;list-style:none;width:100%}
+.loader .fig{width:72px;height:72px;-webkit-mask:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ccircle%20cx='60'%20cy='13'%20r='8.5'%20fill='black'/%3E%3Cg%20fill='none'%20stroke='black'%20stroke-width='9'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M55%2026%20L45%2054'/%3E%3Cpath%20d='M53%2031%20L66%2041%20L77%2034'/%3E%3Cpath%20d='M51%2032%20L38%2042%20L28%2049'/%3E%3Cpath%20d='M45%2054%20L61%2065%20L55%2083%20L63%2086'/%3E%3Cpath%20d='M45%2054%20L35%2072%20L18%2077'/%3E%3C/g%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ccircle%20cx='60'%20cy='13'%20r='8.5'%20fill='black'/%3E%3Cg%20fill='none'%20stroke='black'%20stroke-width='9'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M55%2026%20L45%2054'/%3E%3Cpath%20d='M53%2031%20L66%2041%20L77%2034'/%3E%3Cpath%20d='M51%2032%20L38%2042%20L28%2049'/%3E%3Cpath%20d='M45%2054%20L61%2065%20L55%2083%20L63%2086'/%3E%3Cpath%20d='M45%2054%20L35%2072%20L18%2077'/%3E%3C/g%3E%3C/svg%3E") center/contain no-repeat;
+  background:linear-gradient(100deg,var(--line) 30%,var(--sea) 50%,var(--line) 70%);background-size:300% 100%;animation:mpShine 1.3s linear infinite}
+.boot{position:fixed;inset:0;z-index:40;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+.boot .fig{width:120px;height:120px}
+.boot .brand{font-size:24px}
+@keyframes mpShine{from{background-position:100% 0}to{background-position:0 0}}
+@media (prefers-reduced-motion:reduce){.loader .fig{animation:none;background:var(--sea)}}
+</style>
+</head>
+<body>
+<div class="boot loader" id="boot" role="status"><div class="fig" aria-hidden="true"></div><div class="brand">The Maltese Pacer</div><span id="bootText">Načítavam…</span></div>
+<main>
+
+<!-- ================= PRIHLÁSENIE ================= -->
+<div id="authView" class="stack" hidden>
+  <div class="topbar">
+    <div class="brand">The Maltese Pacer</div>
+    <div class="lang" role="group" aria-label="Jazyk / Language"><button type="button" data-lang="sk">SK</button><button type="button" data-lang="en">EN</button></div>
+  </div>
+  <h1 class="hero" data-i18n="slogan">Poď sa s nami pripraviť na maratón</h1>
+  <p class="notice" id="joinNotice" hidden></p>
+  <div class="card">
+    <h2 id="authTitle" style="margin-bottom:12px">Prihlásenie</h2>
+    <form id="authForm" class="stack" novalidate>
+      <div id="nameField" hidden><label for="authName" data-i18n="auth.name">Meno v rebríčku</label><input id="authName" type="text" maxlength="40" autocomplete="nickname"></div>
+      <div><label for="authEmail" data-i18n="auth.email">E-mail</label><input id="authEmail" type="email" autocomplete="email" inputmode="email"></div>
+      <div><label for="authPass" data-i18n="auth.pass">Heslo</label><input id="authPass" type="password" autocomplete="current-password" minlength="8"></div>
+      <button class="primary" id="authBtn" type="submit">Prihlásiť sa</button>
+    </form>
+    <p class="msg" id="authMsg" role="status"></p>
+    <button class="link" id="authSwitch" type="button">Nemáš účet? Zaregistruj sa</button>
+  </div>
+</div>
+
+<!-- ================= APPKA ================= -->
+<div id="appView" hidden>
+
+  <!-- ---------- PLÁN ---------- -->
+  <section class="tab" id="tab-plan" hidden>
+    <div id="goalView" class="stack" hidden>
+      <div class="brand">The Maltese Pacer</div>
+      <h1 class="hero" data-i18n="slogan">Poď sa s nami pripraviť na maratón</h1>
+      <p class="sub" style="margin:0" data-i18n="goal.intro">Povedz nám, kedy bežíš a ako ti to ide teraz. Plán poskladáme okolo tvojho času.</p>
+      <form id="goalForm" class="card stack" novalidate>
+        <div>
+          <span class="lbl" id="gDistLbl" data-i18n="goal.dist">Dĺžka trate</span>
+          <div class="pills p4" id="gDist" role="group" aria-labelledby="gDistLbl">
+            <button type="button" class="pill" data-dist="5">5 km</button>
+            <button type="button" class="pill" data-dist="10">10 km</button>
+            <button type="button" class="pill" data-dist="21" data-i18n="dist.21">Polmaratón</button>
+            <button type="button" class="pill" data-dist="42" data-i18n="dist.42">Maratón</button>
+          </div>
+        </div>
+        <div>
+          <label for="gDate" data-i18n="goal.date">Dátum pretekov</label>
+          <input id="gDate" type="date">
+          <p class="hint ok" id="gLeft" style="font-weight:600;margin-top:4px"></p>
+        </div>
+        <div>
+          <span class="lbl" data-i18n="goal.goal">Cieľ</span>
+          <div class="pills p4" id="gKind" role="group" data-i18n-aria="goal.goal" aria-label="Cieľ">
+            <button type="button" class="pill" data-kind="finish" data-i18n="goal.finish">Dobehnúť</button>
+            <button type="button" class="pill" data-kind="slow" id="gSlow">Pod 4:30</button>
+            <button type="button" class="pill" data-kind="fast" id="gFast">Pod 4:00</button>
+            <button type="button" class="pill" data-kind="custom" data-i18n="goal.custom">Vlastný</button>
+          </div>
+          <div id="gCustomWrap" style="margin-top:8px" hidden>
+            <span class="lbl" id="gCustomLbl" data-i18n="goal.target">Cieľový čas</span>
+            <div id="gCustomW" role="group" aria-labelledby="gCustomLbl"></div>
+          </div>
+        </div>
+        <div>
+          <span class="lbl" id="g10kLbl" data-i18n="goal.recent">Posledný výsledok na 10 km (nepovinné)</span>
+          <div id="g10kW" role="group" aria-labelledby="g10kLbl"></div>
+          <p class="hint" style="margin-top:4px" data-i18n="goal.recentHint">Z neho odhadneme tvoje tréningové tempá.</p>
+        </div>
+        <div>
+          <span class="lbl" id="gDaysLbl">V ktoré dni môžeš behať?</span>
+          <div class="pills p7" id="gDays" role="group" aria-labelledby="gDaysLbl"></div>
+          <p class="hint" style="margin-top:4px" data-i18n="goal.daysHint">Plán nemusí využiť všetky dni. Oddych má prednosť, behov bude len toľko, koľko príprava potrebuje.</p>
+        </div>
+        <div>
+          <label for="gLong" data-i18n="goal.longDay">Deň na dlhý beh</label>
+          <select id="gLong"></select>
+        </div>
+        <button class="primary" id="goalBtn" type="submit">Vytvoriť môj plán</button>
+        <p class="msg" id="goalMsg" role="status"></p>
+      </form>
+      <button class="link" id="goalCancel" type="button" hidden data-i18n="goal.back">Späť na plán</button>
+    </div>
+
+    <div id="planView" class="stack" hidden>
+      <div class="between">
+        <h1 id="pWeekTitle">Plán</h1>
+        <span class="hint" id="pDaysLeft"></span>
+      </div>
+      <div>
+        <div class="phasebar" id="pPhaseBar"></div>
+        <div class="phaselbl" id="pPhaseLbl" style="margin-top:5px"></div>
+      </div>
+      <div class="card" id="pForm" hidden></div>
+      <p class="notice" id="pAdapt" hidden></p>
+      <div id="pReplanBanner" class="banner" hidden>
+        <span id="pReplanText"></span>
+        <button class="ghost" id="pReplanBtn" type="button" data-i18n="replan.btn">Prepočítať plán</button>
+      </div>
+      <div id="pToday"></div>
+      <div id="pUpWrap" class="stack" style="gap:6px" hidden>
+        <h2 data-i18n="plan.upcoming">Ďalšie tréningy</h2>
+        <div class="week" id="pUpcoming"></div>
+      </div>
+      <div class="weeknav">
+        <button class="ghost" id="pPrev" type="button" data-i18n-aria="week.prev" aria-label="Predchádzajúci týždeň">‹</button>
+        <h2 id="pWeekLabel">Tento týždeň</h2>
+        <button class="ghost" id="pNext" type="button" data-i18n-aria="week.next" aria-label="Ďalší týždeň">›</button>
+      </div>
+      <p class="hint" id="pWeekKm"></p>
+      <div class="week" id="pWeek"></div>
+      <div id="availWrap" class="stack" style="gap:16px;margin-top:18px;padding-top:18px;border-top:1px solid var(--line)">
+    <h2 data-i18n="cal.title" style="font-size:30px">Kedy nemôžem trénovať</h2>
+    <p class="sub" style="margin:0" data-i18n="cal.sub">Tréningy dávame len do voľných okien, prednostne skoro ráno a večer, keď nie je teplo.</p>
+    <div class="legend">
+      <span><i style="background:var(--busy)"></i><span data-i18n="cal.busy">Nemôžem</span></span>
+      <span><i style="background:var(--luzzu)"></i><span data-i18n="cal.planned">Tréning z plánu</span></span>
+    </div>
+    <div class="card" style="padding:10px">
+      <div class="grid-head" id="calHead"></div>
+      <div class="grid-body" id="calGrid"></div>
+    </div>
+    <div id="cReplanBanner" class="banner" hidden>
+      <span data-i18n="replan.dirty">Zmenil si dostupnosť. Prepočítam plán od dnes, odohrané tréningy ostanú.</span>
+      <button class="ghost" id="cReplanBtn" type="button" data-i18n="replan.btn">Prepočítať plán</button>
+    </div>
+
+    <button class="dashed" id="calExport" type="button" data-i18n="cal.exportAll">Pridať plán do kalendára v telefóne</button>
+    <h2 data-i18n="cal.regular">Pravidelne</h2>
+    <div class="stack" id="ruleList" style="gap:8px"></div>
+    <form id="ruleForm" class="card stack" novalidate hidden>
+      <div><span class="lbl" id="rDaysLbl" data-i18n="cal.days">Dni</span><div class="pills p7" id="rDays" role="group" aria-labelledby="rDaysLbl"></div></div>
+      <div class="row">
+        <div><label for="rFrom" data-i18n="cal.from">Od</label><input id="rFrom" type="time" value="07:00"></div>
+        <div><label for="rTo" data-i18n="cal.to">Do</label><input id="rTo" type="time" value="16:00"></div>
+      </div>
+      <div><label for="rLabel" data-i18n="cal.what">Čo to je</label><input id="rLabel" type="text" maxlength="40" data-i18n-ph="cal.workPh" placeholder="Práca" autocomplete="off"></div>
+      <div class="inline"><button class="ghost" type="submit" data-i18n="c.save">Uložiť</button><button class="ghost" type="button" id="rCancel" data-i18n="c.cancel">Zrušiť</button></div>
+      <p class="msg" id="ruleMsg" role="status"></p>
+    </form>
+    <button class="dashed" id="rAdd" type="button" data-i18n="cal.addRule">+ Pridať pravidelný čas</button>
+
+    <h2 data-i18n="cal.exc">Výnimky</h2>
+    <div class="stack" id="excList" style="gap:8px"></div>
+    <form id="excForm" class="card stack" novalidate hidden>
+      <div class="row">
+        <div><label for="eFrom" data-i18n="cal.from">Od</label><input id="eFrom" type="date"></div>
+        <div><label for="eTo" data-i18n="cal.to">Do</label><input id="eTo" type="date"></div>
+      </div>
+      <div><label for="eLabel" data-i18n="cal.what">Čo to je</label><input id="eLabel" type="text" maxlength="40" data-i18n-ph="cal.holidayPh" placeholder="Dovolenka" autocomplete="off"></div>
+      <div class="inline"><button class="ghost" type="submit" data-i18n="c.save">Uložiť</button><button class="ghost" type="button" id="eCancel" data-i18n="c.cancel">Zrušiť</button></div>
+      <p class="msg" id="excMsg" role="status"></p>
+    </form>
+    <button class="dashed" id="eAdd" type="button" data-i18n="cal.addExc">+ Pridať výnimku</button>
+      </div>
+      <p class="hint" data-i18n="plan.disclaimer">Plán je orientačný a vychádza z bežných tréningových zásad. Pri bolesti alebo zranení vynechaj tréning a poraď sa s lekárom.</p>
+      <button class="link" id="pMethod" type="button" data-i18n="d.methodLink">Ako funguje tvoj plán</button>
+      <button class="link" id="pEditGoal" type="button" data-i18n="plan.editGoal">Upraviť cieľ a tréningové dni</button>
+    </div>
+  </section>
+
+  <!-- ---------- BEHY ---------- -->
+  <section class="tab" id="tab-runs">
+    <div class="between"><h1 data-i18n="runs.title">Moje behy</h1><span class="hint" id="hello"></span></div>
+    <div class="coast">
+      <svg viewBox="0 0 340 70" role="img" aria-labelledby="coastTitle">
+        <title id="coastTitle" data-i18n="runs.coast">Najdlhší beh na ceste k cieľu</title>
+        <path d="M0 52 C40 40 70 58 110 46 S180 30 220 44 S290 56 340 40 L340 70 L0 70Z" fill="var(--sea-soft)"/>
+        <path d="M0 52 C40 40 70 58 110 46 S180 30 220 44 S290 56 340 40" fill="none" stroke="var(--line)" stroke-width="3" stroke-linecap="round"/>
+        <path id="progressPath" d="M0 52 C40 40 70 58 110 46 S180 30 220 44 S290 56 340 40" fill="none" stroke="var(--sea)" stroke-width="3" stroke-linecap="round"/>
+        <g transform="translate(330 22)"><line x1="0" y1="0" x2="0" y2="18" stroke="var(--ink)" stroke-width="1.5"/><path d="M0 0 h12 l-3 4 3 4 h-12z" fill="var(--red)"/></g>
+        <circle id="runner" r="6" fill="var(--luzzu)" stroke="var(--ink)" stroke-width="1.5" cx="0" cy="0"/>
+      </svg>
+      <div class="coast-label"><strong id="longest">0 km</strong><span id="longestOf"></span></div>
+    </div>
+
+    <form id="runForm" class="card stack" novalidate>
+      <h2 data-i18n="runs.add">Pridať beh</h2>
+      <div class="row">
+        <div><label for="date" data-i18n="runs.date">Dátum</label><input id="date" type="date"></div>
+        <div><label for="km" data-i18n="runs.km">Vzdialenosť (km)</label><input id="km" type="text" inputmode="decimal" placeholder="10,5" autocomplete="off"></div>
+      </div>
+      <div>
+        <span class="lbl" id="timeLbl" data-i18n="runs.time">Čas</span>
+        <div id="runTime" role="group" aria-labelledby="timeLbl"></div>
+      </div>
+      <div>
+        <span class="lbl" id="rpeLbl" data-i18n="rpe.label">Aké to bolo? (nepovinné)</span>
+        <div class="pills p5" id="rpe" role="group" aria-labelledby="rpeLbl"></div>
+        <p class="hint" id="rpeHint" style="margin-top:4px" data-i18n="rpe.scale">1 = veľmi ľahké, 10 = maximum</p>
+      </div>
+      <div><label for="note" data-i18n="runs.note">Trasa alebo poznámka</label><input id="note" type="text" maxlength="80" data-i18n-ph="runs.notePh" placeholder="Sliema → St Julian’s a späť" autocomplete="off"></div>
+      <div>
+        <span class="lbl" data-i18n="photo.label">Fotka (nepovinné)</span>
+        <div class="photoRow">
+          <label class="ghost photoPick" for="photo" style="display:inline-flex;align-items:center;min-height:44px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg><span id="photoPickTxt" data-i18n="photo.add">Pridať fotku</span></label>
+          <input id="photo" type="file" accept="image/*" class="sr-only">
+          <img id="photoPrev" class="thumb" hidden alt="">
+          <button type="button" class="del" id="photoDel" hidden data-i18n="photo.remove">Odstrániť</button>
+        </div>
+      </div>
+      <input id="photoLater" type="file" accept="image/*" class="sr-only" tabindex="-1" aria-hidden="true">
+      <div class="pace"><output id="pace">–:––</output><span>min/km</span></div>
+      <button class="primary" id="saveRun" type="submit" data-i18n="runs.save">Uložiť beh</button>
+      <p class="msg" id="runMsg" role="status"></p>
+    </form>
+
+    <ul class="runs" id="runs"></ul>
+
+  </section>
+
+  <!-- ---------- SKUPINA ---------- -->
+  <section class="tab" id="tab-group" hidden>
+    <h1 data-i18n="grp.title">Skupiny</h1>
+    <p class="notice" id="groupNotice" hidden></p>
+    <div class="chips" id="groupChips" role="group" data-i18n-aria="grp.group" aria-label="Skupina"></div>
+    <div id="groupForms" class="card stack" hidden>
+      <form id="joinForm" class="inline" novalidate>
+        <input id="joinCode" type="text" data-i18n-ph="grp.code" placeholder="Pozývací kód" data-i18n-aria="grp.code" aria-label="Pozývací kód" autocapitalize="characters" autocomplete="off">
+        <button class="ghost" type="submit" data-i18n="grp.join">Pridať sa</button>
+      </form>
+      <form id="createForm" class="inline" novalidate>
+        <input id="createName" type="text" maxlength="60" data-i18n-ph="grp.newName" placeholder="Názov novej skupiny" data-i18n-aria="grp.newName" aria-label="Názov novej skupiny" autocomplete="off">
+        <button class="ghost" type="submit" data-i18n="grp.create">Založiť</button>
+      </form>
+      <p class="msg" id="groupMsg" role="status"></p>
+    </div>
+    <p class="empty" id="noGroups" hidden data-i18n="grp.none">Zatiaľ nie si v žiadnej skupine. Pridaj sa kódom alebo založ vlastnú.</p>
+
+    <div id="boardWrap" class="stack" hidden>
+      <div class="inline">
+        <div class="seg" role="group" data-i18n-aria="grp.by" aria-label="Rebríček podľa">
+          <button type="button" data-mode="plan" aria-pressed="true" data-i18n="grp.modePlan">Plnenie plánu</button>
+          <button type="button" data-mode="km" aria-pressed="false" data-i18n="grp.modeKm">Kilometre</button>
+        </div>
+        <div class="seg" role="group" data-i18n-aria="grp.period" aria-label="Obdobie">
+          <button type="button" data-period="week" aria-pressed="false" data-i18n="grp.week">Týždeň</button>
+          <button type="button" data-period="month" aria-pressed="true" data-i18n="grp.month">Mesiac</button>
+        </div>
+      </div>
+      <div class="card" id="gCoastWrap" hidden>
+        <div id="gCoast"></div>
+        <div class="glegend" id="gLegend"></div>
+        <p class="hint" id="gCoastHint" style="margin-top:6px"></p>
+      </div>
+      <ol class="board" id="board"></ol>
+      <p class="hint" id="boardHint"></p>
+      <p class="hint" data-i18n="grp.tapHint">Ťukni na meno a uvidíš jeho behy.</p>
+      <h2 data-i18n="grp.feed">Posledné behy v skupine</h2>
+      <ul class="runs feed" id="feed"></ul>
+      <div class="card stack">
+        <div class="invite">
+          <span><span data-i18n="grp.inviteCode">Kód pre pozvanie</span>: <code id="inviteCode"></code></span>
+          <button class="ghost" id="copyCode" type="button" data-i18n="grp.copy">Kopírovať</button>
+        </div>
+        <button class="primary" id="shareInvite" type="button" data-i18n="grp.shareInvite">Pozvať kamarátov</button>
+        <button class="ghost danger" id="leaveGroup" type="button" data-i18n="grp.leave">Opustiť skupinu</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------- KALENDÁR ---------- -->
+  <section class="tab" id="tab-profile" hidden>
+    <h1 data-i18n="prof.title">Profil</h1>
+    <div class="card stack">
+      <div>
+      <label for="myName" data-i18n="auth.name">Meno v rebríčku</label>
+      <form id="nameForm" class="inline" novalidate>
+        <input id="myName" type="text" maxlength="40" data-i18n-aria="prof.nameAria" aria-label="Moje meno v rebríčku" autocomplete="off">
+        <button class="ghost" type="submit" data-i18n="prof.saveName">Uložiť meno</button>
+      </form>
+      </div>
+      <p class="msg" id="nameMsg" role="status"></p>
+      <div>
+        <span class="lbl" id="colorLbl" data-i18n="prof.color">Moja farba</span>
+        <div class="swatches" id="swatches" role="group" aria-labelledby="colorLbl"></div>
+        <p class="hint" style="margin-top:6px" data-i18n="prof.colorHint">Touto farbou ťa uvidia ostatní v skupine.</p>
+      </div>
+      <div>
+        <span class="lbl" id="themeLbl" data-i18n="prof.theme">Vzhľad</span>
+        <div class="seg" role="group" aria-labelledby="themeLbl" id="themeSeg">
+          <button type="button" data-theme-mode="light" data-i18n="prof.light">Svetlý</button>
+          <button type="button" data-theme-mode="dark" data-i18n="prof.dark">Tmavý</button>
+          <button type="button" data-theme-mode="system" data-i18n="prof.system">Systém</button>
+        </div>
+      </div>
+      <div>
+        <span class="lbl" id="bgLbl" data-i18n="prof.bg">Farba pozadia</span>
+        <div class="swatches bgs" id="bgSwatches" role="group" aria-labelledby="bgLbl"></div>
+      </div>
+      <div class="between" style="align-items:center">
+        <span data-i18n="prof.lang">Jazyk</span>
+        <div class="lang" role="group" aria-label="Jazyk / Language"><button type="button" data-lang="sk">SK</button><button type="button" data-lang="en">EN</button></div>
+      </div>
+      <button class="ghost" id="logout" type="button" data-i18n="prof.logout">Odhlásiť sa</button>
+    </div>
+  </section>
+  <section class="tab" id="tab-month" hidden>
+    <div class="between"><h1 id="mTitle" data-i18n="mon.title">Kalendár skupiny</h1></div>
+    <div id="mGroupWrap" class="inline" style="align-items:center"></div>
+    <p class="empty" id="mNoGroup" hidden data-i18n="mon.noGroup">Kalendár ukazuje behy tvojej skupiny. Najprv sa pridaj do skupiny alebo ju založ.</p>
+    <div id="mWrap" class="stack" style="gap:10px">
+      <div class="weeknav">
+        <button class="ghost" id="mPrev" type="button" data-i18n-aria="mon.prev" aria-label="Predchádzajúci mesiac">‹</button>
+        <h2 id="mLabel"></h2>
+        <button class="ghost" id="mNext" type="button" data-i18n-aria="mon.next" aria-label="Ďalší mesiac">›</button>
+      </div>
+      <div class="mhead" id="mHead"></div>
+      <div class="mgrid" id="mGrid"></div>
+      <p class="hint" data-i18n="mon.tap">Ťukni na deň a uvidíš, kto behal a ako.</p>
+      <div class="card stack" style="gap:8px">
+        <div class="mlegend" id="mLegend"></div>
+        <div class="mkeys">
+          <span><span class="dot" style="background:var(--sea)"></span><span data-i18n="mon.lgDone">beh alebo splnený tréning</span></span>
+          <span><span class="ring" style="border-color:var(--sea)"></span><span data-i18n="mon.lgPlanned">naplánovaný tréning</span></span>
+          <span><span class="dot pale" style="background:var(--sea);--c:var(--sea)"></span><span data-i18n="mon.lgMissed">nesplnený tréning</span></span>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+</main>
+
+<div class="toast" id="toast" role="status" hidden></div>
+<dialog class="sheet" id="sheet" aria-labelledby="sheetTitle"><div class="sheet-in" id="sheetBody"></div></dialog>
+<dialog class="sheet" id="picker" aria-labelledby="pickerTitle"><div class="sheet-in" id="pickerBody"></div></dialog>
+
+<nav class="tabs" id="tabs" data-i18n-aria="nav.main" aria-label="Hlavná navigácia" hidden>
+  <div>
+    <button type="button" data-tab="runs" aria-current="page"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span data-i18n="nav.runs">Behy</span></button>
+    <button type="button" data-tab="group"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14.8c1.6.8 2.6 2.6 3 5.2"/></svg><span data-i18n="nav.group">Skupina</span></button>
+    <button type="button" data-tab="plan"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 10h18M9 15l2 2 4-4"/></svg><span data-i18n="nav.plan">Plán</span></button>
+    <button type="button" data-tab="month"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span data-i18n="nav.cal">Kalendár</span></button>
+    <button type="button" data-tab="profile"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4.2-6 8-6s7 2 8 6"/></svg><span data-i18n="nav.profile">Profil</span></button>
+  </div>
+</nav>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  // ================= JAZYKY (SK / EN) =================
+  // Nový text: pridaj kľúč do oboch jazykov. Funkcie riešia množné čísla.
+  const skPl = (n, one, few, many) => n===1 ? one : (n>=2 && n<=4 ? few : many);
+  const enPl = (n, one, other) => n===1 ? one : other;
+  const L = {
+    sk: {
+      slogan:'Poď sa s nami pripraviť na maratón',
+      'auth.login':'Prihlásenie', 'auth.signup':'Registrácia', 'auth.name':'Meno v rebríčku', 'auth.email':'E-mail', 'auth.pass':'Heslo',
+      'auth.loginBtn':'Prihlásiť sa', 'auth.signupBtn':'Zaregistrovať sa', 'auth.toSignup':'Nemáš účet? Zaregistruj sa', 'auth.toLogin':'Už máš účet? Prihlás sa',
+      'auth.needEmail':'Zadaj e-mail.', 'auth.pwShort':'Heslo musí mať aspoň 8 znakov.', 'auth.needName':'Zadaj meno, ktoré uvidia ostatní v rebríčku.',
+      'auth.signupDone':'Hotovo. Potvrď registráciu cez odkaz v e-maile a potom sa prihlás.', 'auth.joinAfter':'Po prihlásení ťa pridáme do skupiny s kódom {code}.',
+      'err.badLogin':'Nesprávny e-mail alebo heslo.', 'err.notConfirmed':'E-mail ešte nie je potvrdený. Klikni na odkaz v e-maile.',
+      'err.already':'Tento e-mail je už zaregistrovaný. Prihlás sa.', 'err.rate':'Príliš veľa pokusov. Skús to o chvíľu.',
+      'err.generic':'Nepodarilo sa to. Skús to znova.', 'err.paceTypo':'Tempo pod 2:00/km vyzerá ako preklep. Skontroluj čas a vzdialenosť.',
+      'err.db':'Databáza nie je aktuálna. Spusti v Supabase všetky migrácie.', 'err.code':'Neplatný pozývací kód.', 'err.auth':'Nie si prihlásený.',
+      'err.supabase':'Nepodarilo sa načítať knižnicu Supabase. Skontroluj pripojenie a obnov stránku.',
+      'goal.intro':'Povedz nám, kedy bežíš a ako ti to ide teraz. Plán poskladáme okolo tvojho času.',
+      'goal.dist':'Dĺžka trate', 'goal.date':'Dátum pretekov', 'goal.goal':'Cieľ', 'goal.finish':'Dobehnúť', 'goal.custom':'Vlastný', 'goal.under':'Pod {x}',
+      'goal.target':'Cieľový čas', 'goal.recent':'Posledný výsledok na 10 km (nepovinné)', 'goal.recentHint':'Z neho odhadneme tvoje tréningové tempá.',
+      'goal.days': v => 'V ktoré dni môžeš behať? ('+v.n+' '+skPl(v.n,'deň','dni','dní')+')', 'goal.longDay':'Deň na dlhý beh', 'goal.daysHint':'Plán nemusí využiť všetky dni. Oddych má prednosť, behov bude len toľko, koľko príprava potrebuje.',
+      'goal.create':'Vytvoriť môj plán', 'goal.saveRe':'Uložiť a prepočítať plán', 'goal.building':'Zostavujem plán…', 'goal.back':'Späť na plán',
+      'goal.left': v => 'Zostáva '+v.w+' '+skPl(v.w,'týždeň','týždne','týždňov')+(v.r ? ' a '+v.r+' '+skPl(v.r,'deň','dni','dní') : ''),
+      'goal.past':'Tento dátum už bol.', 'goal.needDate':'Zadaj dátum pretekov.', 'goal.lead':'Preteky musia byť aspoň o {n} dní, inak sa plán nedá zostaviť.',
+      'goal.needDays':'Vyber aspoň 2 tréningové dni.', 'goal.badCustom':'Cieľový čas je mimo rozsahu pre túto trať.',
+      'goal.bad10k':'Výsledok na 10 km zadaj v minútach a sekundách, napríklad 52 min a 30 s.', 'goal.saveFail':'Plán sa nepodarilo uložiť. Skús to znova.',
+      'u.hours':'Hodiny', 'u.min':'Minúty', 'u.sec':'Sekundy', 'u.h':'h', 'u.m':'min', 'u.s':'s',
+      'dist.5':'5 km', 'dist.10':'10 km', 'dist.21':'Polmaratón', 'dist.42':'Maratón',
+      'race.5':'Preteky na 5 km', 'race.10':'Preteky na 10 km', 'race.21':'Polmaratón', 'race.42':'Maratón',
+      'race.in': v => ({ '42':'maratón', '21':'polmaratón' }[v.k] || 'preteky')+' o '+v.n+' '+skPl(v.n,'deň','dni','dní'),
+      'race.today': v => ({ '42':'maratón je dnes', '21':'polmaratón je dnes' }[v.k] || 'preteky sú dnes'),
+      'race.past': v => ({ '42':'maratón je za tebou', '21':'polmaratón je za tebou' }[v.k] || 'preteky sú za tebou'),
+      'phase.base':'Základ', 'phase.build':'Budovanie', 'phase.peak':'Vrchol', 'phase.taper':'Ladenie',
+      'plan.title':'Plán', 'plan.week':'Týždeň {a} z {b}', 'plan.disclaimer':'Plán je orientačný a vychádza z bežných tréningových zásad. Pri bolesti alebo zranení vynechaj tréning a poraď sa s lekárom.',
+      'plan.editGoal':'Upraviť cieľ a tréningové dni', 'plan.upcoming':'Ďalšie tréningy', 'w.test':'Kontrolný beh 5 km', 'cal.test':'Test',
+      'rpe.label':'Aké to bolo? (nepovinné)', 'rpe.scale':'1 = veľmi ľahké, 10 = maximum', 'rpe.1':'veľmi ľahké', 'rpe.3':'ľahké, dalo sa rozprávať', 'rpe.5':'stredne náročné', 'rpe.7':'náročné', 'rpe.9':'na maximum', 'rpe.list':'pocit {n}/10',
+      'adapt.faster':'Forma stúpa! Náročné tréningy ti idú výborne, tempá sú o {s} s/km rýchlejšie.',
+      'trend.up':'Forma stúpa', 'trend.down':'Forma klesá', 'trend.flat':'Forma stagnuje',
+      'trend.ahead':'Si o {x} pred plánom.', 'trend.behind':'Za plánom zaostávaš o {x}.', 'trend.onTrack':'Držíš sa plánu.',
+      'trend.tip.down':'Daj si pozor na únavu: spánok, jedlo a ľahké behy naozaj ľahko.', 'trend.tip.flat':'Nevadí, forma často príde s oddychom. Drž ľahké behy ľahko.',
+      'form.title':'Tvoja forma', 'form.now':'Odhad na pretekoch teraz: {t}', 'form.goal':'Cieľ: {t}', 'form.plan':'Tempá tohto týždňa počítajú s časom {t}',
+      'form.unknown':'Formu zmeriame pri najbližšom kontrolnom behu.',
+      'adapt.slower':'Forma momentálne klesá: náročné tréningy boli nad tvoje sily, tempá sú o {s} s/km pomalšie.',
+      'adapt.tired':'Plán sa prispôsobil: posledné behy boli únavné, tempá sú o {s} s/km pomalšie, aby si sa stihol zotaviť.',
+      'adapt.test':'Kontrolný beh: odhad na pretekoch {time}, tempá sme prepočítali.',
+      'adapt.testDist':'Pri kontrolnom behu zapíš len samotných 5 km bez rozklusu a vyklusu, inak ho nevieme vyhodnotiť.',
+      'adapt.pause':'Dlhšie si nebežal. Prepočítaj plán, začne od tvojej aktuálnej formy.', 'plan.howTo':'Ako na tento tréning ›',
+      'd.what':'Čo to je', 'd.why':'Prečo', 'd.how':'Ako na to', 'd.points':'Dôležité body', 'd.addCal':'Pridať do kalendára', 'd.close':'Zavrieť',
+      'd.methodLink':'Ako funguje tvoj plán', 'd.methodTitle':'Ako funguje tvoj plán', 'd.methodIntro':'Pár zásad, na ktorých stojí každý tvoj tréning.',
+      'd.phase':'Fáza: {p}', 'd.week':'Týždeň {a} z {b}', 'cal.exportAll':'Pridať plán do kalendára v telefóne', 'cal.exportNone':'V pláne nie sú žiadne ďalšie tréningy.',
+      'cal.exportDone':'Otvorí sa kalendár, potvrď pridanie udalostí.', 'plan.today':'Dnes', 'plan.tomorrow':'Zajtra', 'plan.next':'Najbližšie', 'plan.log':'Zapísať beh', 'plan.editTimes':'Upraviť časy',
+      'plan.pace':'Tempo', 'plan.noMore':'V pláne už nie je žiadny ďalší tréning.', 'plan.kmPlanned':'{km} km v pláne', 'plan.paceRange':'tempo {a} – {b} /km',
+      'plan.notAvail':'Nemôžeš trénovať', 'plan.rest':'Voľno', 'plan.recovery':'Regenerácia', 'plan.extra':'Beh navyše zapísaný',
+      'week.this':'Tento týždeň', 'week.next':'Budúci týždeň', 'week.last':'Minulý týždeň', 'week.prev':'Predchádzajúci týždeň', 'week.nextAria':'Ďalší týždeň',
+      'badge.done':'Splnené', 'badge.today':'Dnes', 'badge.key':'Kľúčový', 'badge.block':'Blokované', 'badge.run':'Beh',
+      'w.easy':'Pomalý beh', 'w.shake':'Ľahký beh', 'w.tempo':'Tempový beh', 'w.mp':'Maratónske tempo', 'w.rp':'Tempo pretekov', 'w.long':'Dlhý beh',
+      'seg.warm':'2 km rozklus', 'seg.cool':'2 km vyklus', 'seg.tempo':'{x} km v tempe', 'seg.mp':'{x} km v maratónskom tempe', 'seg.rp':'{x} km v tempe pretekov',
+      'tip.long':'Pokojne, mal by si vedieť rozprávať. Ber vodu.', 'tip.easy':'Ľahko a uvoľnene.', 'tip.strides':'Ľahko, na konci 4 krátke zrýchlenia.',
+      'tip.shake':'Krátko a voľne, nohy si šetri.', 'tip.raceLong':'Prvú polovicu drž na uzde, v cieli to oceníš.', 'tip.raceShort':'Rozbehni sa poriadne a začni rozumne, posledný kilometer daj naplno.',
+      'replan.dirty':'Zmenil si dostupnosť. Prepočítam plán od dnes, odohrané tréningy ostanú.', 'replan.btn':'Prepočítať plán', 'replan.busy':'Počítam…',
+      'replan.dropped': v => v.n+' '+skPl(v.n,'tréning sa nezmestil','tréningy sa nezmestili','tréningov sa nezmestilo')+' do voľných okien. Skús uvoľniť nejaký čas v kalendári.',
+      'replan.fail':'Plán sa nepodarilo prepočítať. Skús to znova.',
+      'runs.title':'Moje behy', 'runs.hello':'Ahoj, {name}', 'runs.coast':'Najdlhší beh na ceste k cieľu', 'runs.longestOf':'môj najdlhší beh z {km} km',
+      'runs.add':'Pridať beh', 'runs.date':'Dátum', 'runs.km':'Vzdialenosť (km)', 'runs.time':'Čas', 'runs.note':'Trasa alebo poznámka',
+      'runs.notePh':'Sliema → St Julian’s a späť', 'runs.save':'Uložiť beh', 'runs.saving':'Ukladám…', 'runs.saved':'Uložené',
+      'runs.needDate':'Vyber dátum behu.', 'runs.needKm':'Zadaj vzdialenosť v km, napríklad 10,5.', 'runs.needTime':'Zadaj čas behu.',
+      'runs.saveFail':'Beh sa nepodarilo uložiť. Skús to znova.', 'runs.delFail':'Beh sa nepodarilo zmazať.', 'runs.loadFail':'Behy sa nepodarilo načítať.',
+      'runs.empty':'Zatiaľ žiadne behy. Pridaj prvý vyššie.', 'runs.delAria':'Zmazať beh {km} km z {date}', 'runs.shareAria':'Zdieľať beh {km} km z {date}',
+      'runs.savedShare':'Uložené. Chceš sa pochváliť?',
+      'c.delete':'Zmazať', 'c.loading':'Načítavam…',
+      'photo.label':'Fotka (nepovinné)', 'photo.add':'Pridať fotku', 'photo.change':'Zmeniť fotku', 'photo.remove':'Odstrániť', 'photo.removeFull':'Odstrániť fotku',
+      'photo.alt':'Fotka z behu', 'photo.fail':'Fotku sa nepodarilo spracovať. Skús inú.', 'photo.upFail':'Beh je uložený, ale fotku sa nepodarilo nahrať.',
+      'photo.addAria':'Pridať fotku k behu z {date}', 'photo.uploading':'Nahrávam fotku…', 'photo.added':'Fotka pridaná.', 'c.done':'Hotovo', 'goal.notSet':'nezadané', 'c.sure':'Naozaj?', 'c.save':'Uložiť', 'c.cancel':'Zrušiť', 'c.share':'Zdieľať', 'c.saved':'Uložené.',
+      'prof.title':'Profil', 'prof.nameAria':'Moje meno v rebríčku', 'prof.saveName':'Uložiť meno', 'prof.nameEmpty':'Meno nemôže byť prázdne.',
+      'prof.nameFail':'Meno sa nepodarilo uložiť.', 'prof.lang':'Jazyk', 'prof.theme':'Vzhľad', 'prof.light':'Svetlý', 'prof.dark':'Tmavý', 'prof.system':'Systém', 'prof.bg':'Farba pozadia', 'prof.color':'Moja farba', 'prof.colorHint':'Touto farbou ťa uvidia ostatní v skupine.', 'prof.colorFail':'Farbu sa nepodarilo uložiť.', 'prof.logout':'Odhlásiť sa',
+      'grp.title':'Skupiny', 'grp.group':'Skupina', 'grp.code':'Pozývací kód', 'grp.join':'Pridať sa', 'grp.newName':'Názov novej skupiny', 'grp.create':'Založiť',
+      'grp.close':'Zavrieť', 'grp.addOrCreate':'+ Pridať sa / založiť', 'grp.none':'Zatiaľ nie si v žiadnej skupine. Pridaj sa kódom alebo založ vlastnú.',
+      'grp.loadFail':'Skupiny sa nepodarilo načítať.', 'grp.needCode':'Zadaj pozývací kód.', 'grp.joinFail':'Do skupiny sa nepodarilo pridať.',
+      'grp.needName':'Zadaj názov skupiny.', 'grp.createFail':'Skupinu sa nepodarilo založiť.', 'grp.joined':'Pridal si sa do skupiny {name}.',
+      'grp.by':'Rebríček podľa', 'grp.period':'Obdobie', 'grp.modePlan':'Plnenie plánu', 'grp.modeKm':'Kilometre', 'grp.week':'Týždeň', 'grp.month':'Mesiac',
+      'grp.loading':'Načítavam rebríček…', 'grp.boardFail':'Rebríček sa nepodarilo načítať.', 'grp.me':'(ja)',
+      'grp.planDetail': v => v.done+' z '+v.planned+' '+skPl(v.planned,'tréningu','tréningov','tréningov')+', '+v.km+' km',
+      'grp.noPlan':'zatiaľ bez plánu v tomto období, {km} km', 'grp.runs': v => v.n+' '+skPl(v.n,'beh','behy','behov'),
+      'grp.longest':'najdlhší {km} km', 'grp.bestPace':'tempo {p}',
+      'grp.hint':'Plnenie porovnáva každého s jeho vlastným plánom, takže začiatočník a skúsený bežec súťažia férovo. Tréning je splnený, keď v ten deň zapíšeš beh.',
+      'grp.inviteCode':'Kód pre pozvanie', 'grp.copy':'Kopírovať', 'grp.copied':'Skopírované', 'grp.shareInvite':'Pozvať kamarátov',
+      'grp.leave':'Opustiť skupinu', 'grp.tapHint':'Ťukni na meno a uvidíš jeho behy.',
+      'mon.title':'Kalendár skupiny', 'mon.noGroup':'Kalendár ukazuje behy tvojej skupiny. Najprv sa pridaj do skupiny alebo ju založ.',
+      'mon.prev':'Predchádzajúci mesiac', 'mon.next':'Ďalší mesiac', 'mon.tap':'Ťukni na deň a uvidíš, kto behal a ako.', 'mon.mine':'tvoj naplánovaný tréning', 'mon.lgDone':'beh alebo splnený tréning', 'mon.lgPlanned':'naplánovaný tréning', 'mon.lgMissed':'nesplnený tréning',
+      'mon.legend': v => v.km+' km, plán '+(v.pct==null ? '–' : v.pct+' %'), 'mon.runners': v => v.n+' '+skPl(v.n,'bežec','bežci','bežcov'),
+      'mon.run':'{km} km, {time}, {pace} /km', 'mon.plan':'Plán: {w}', 'mon.done':'splnené', 'mon.missed':'nesplnené', 'mon.planned':'naplánované',
+      'mon.monthPct':'Plán v tomto mesiaci: {p}', 'mon.rest':'Voľno: {names}', 'mon.nobody':'V tento deň nikto nebežal ani nemal tréning.',
+      'mon.loading':'Načítavam kalendár…', 'mon.fail':'Kalendár sa nepodarilo načítať.', 'mon.group':'Skupina', 'grp.coastAria':'Prvých 5 bežcov na ceste k cieľu', 'grp.coastPlan':'Vlajka v cieli znamená 100 % splneného plánu.', 'grp.coastKm':'Vlajka v cieli patrí lídrovi v kilometroch.', 'grp.feed':'Posledné behy v skupine',
+      'grp.feedEmpty':'Zatiaľ žiadne behy. Buď prvý!', 'grp.feedFail':'Behy skupiny sa nepodarilo načítať.', 'grp.memberRuns':'Posledné behy',
+      'grp.memberGoal':'Cieľ: {race}, {date}', 'grp.memberNoGoal':'Zatiaľ bez nastaveného cieľa', 'grp.memberMonth': v => v.km+' km tento mesiac, '+v.n+' '+skPl(v.n,'beh','behy','behov'),
+      'grp.memberEmpty':'Zatiaľ žiadne behy.', 'grp.loadingRuns':'Načítavam behy…', 'grp.longestAll':'najdlhší beh {km} km', 'grp.leaveSure':'Naozaj opustiť?', 'grp.leaveFail':'Skupinu sa nepodarilo opustiť.',
+      'cal.title':'Kedy nemôžem trénovať', 'cal.sub':'Tréningy dávame len do voľných okien, prednostne skoro ráno a večer, keď nie je teplo.',
+      'cal.busy':'Nemôžem', 'cal.planned':'Tréning z plánu', 'cal.regular':'Pravidelne', 'cal.days':'Dni', 'cal.from':'Od', 'cal.to':'Do', 'cal.what':'Čo to je',
+      'cal.workPh':'Práca', 'cal.holidayPh':'Dovolenka', 'cal.addRule':'+ Pridať pravidelný čas', 'cal.exc':'Výnimky', 'cal.addExc':'+ Pridať výnimku',
+      'cal.noRules':'Zatiaľ nič. Pridaj napríklad prácu alebo kurz.', 'cal.noExc':'Žiadne výnimky. Pridaj dovolenku, služobku alebo zmenu.',
+      'cal.noTraining':'bez tréningov', 'cal.needDay':'Vyber aspoň jeden deň.', 'cal.timeOrder':'Čas „do“ musí byť neskôr ako „od“.',
+      'cal.dateOrder':'Dátum „do“ nesmie byť skôr ako „od“.', 'cal.saveFail':'Nepodarilo sa uložiť.', 'cal.delFail':'Nepodarilo sa zmazať.',
+      'cal.unavailable':'Nemôžem', 'cal.exception':'Výnimka', 'cal.long':'Dlhý', 'cal.run':'Beh', 'cal.tempo':'Tempo', 'cal.race':'Preteky',
+      'nav.main':'Hlavná navigácia', 'nav.plan':'Plán', 'nav.runs':'Behy', 'nav.group':'Skupina', 'nav.cal':'Kalendár', 'nav.profile':'Profil',
+      'share.runText':'Odbehnuté {km} km za {time} ({pace} /km). Pripravujem sa s The Maltese Pacer.',
+      'share.invite':'Poď so mnou do skupiny „{group}“ v The Maltese Pacer. Pripravme sa spolu na preteky!',
+      'share.cardDone':'Odbehnuté', 'share.cardPace':'Tempo', 'share.cardTime':'Čas', 'share.cardPlan':'Týždeň {a} z {b}, {race} {date}',
+      'share.imgSaved':'Obrázok som stiahol, text je skopírovaný.', 'share.copied':'Text je skopírovaný, vlož ho kam potrebuješ.', 'share.fail':'Zdieľanie sa nepodarilo.'
+    },
+    en: {
+      slogan:'Let’s get marathon-ready together',
+      'auth.login':'Log in', 'auth.signup':'Sign up', 'auth.name':'Name on the leaderboard', 'auth.email':'Email', 'auth.pass':'Password',
+      'auth.loginBtn':'Log in', 'auth.signupBtn':'Sign up', 'auth.toSignup':'No account yet? Sign up', 'auth.toLogin':'Already have an account? Log in',
+      'auth.needEmail':'Enter your email.', 'auth.pwShort':'Password must be at least 8 characters.', 'auth.needName':'Enter the name others will see on the leaderboard.',
+      'auth.signupDone':'Done. Confirm your sign-up with the link in the email, then log in.', 'auth.joinAfter':'Once you log in, we’ll add you to the group with code {code}.',
+      'err.badLogin':'Wrong email or password.', 'err.notConfirmed':'Your email isn’t confirmed yet. Click the link in the email.',
+      'err.already':'This email is already registered. Log in instead.', 'err.rate':'Too many attempts. Try again in a moment.',
+      'err.generic':'Something went wrong. Try again.', 'err.paceTypo':'A pace under 2:00/km looks like a typo. Check the time and distance.',
+      'err.db':'The database is out of date. Run all migrations in Supabase.', 'err.code':'Invalid invite code.', 'err.auth':'You’re not logged in.',
+      'err.supabase':'Couldn’t load the Supabase library. Check your connection and reload the page.',
+      'goal.intro':'Tell us when you race and how you’re running now. We’ll build the plan around your schedule.',
+      'goal.dist':'Race distance', 'goal.date':'Race date', 'goal.goal':'Goal', 'goal.finish':'Just finish', 'goal.custom':'Custom', 'goal.under':'Under {x}',
+      'goal.target':'Target time', 'goal.recent':'Recent 10 km result (optional)', 'goal.recentHint':'We’ll estimate your training paces from it.',
+      'goal.days': v => 'Which days can you run? ('+v.n+' '+enPl(v.n,'day','days')+')', 'goal.longDay':'Long run day', 'goal.daysHint':'The plan won’t necessarily use every day. Rest comes first, you’ll only run as often as your training needs.',
+      'goal.create':'Create my plan', 'goal.saveRe':'Save and recalculate plan', 'goal.building':'Building your plan…', 'goal.back':'Back to plan',
+      'goal.left': v => v.w+' '+enPl(v.w,'week','weeks')+(v.r ? ' and '+v.r+' '+enPl(v.r,'day','days') : '')+' to go',
+      'goal.past':'That date has already passed.', 'goal.needDate':'Enter the race date.', 'goal.lead':'The race must be at least {n} days away to build a plan.',
+      'goal.needDays':'Pick at least 2 training days.', 'goal.badCustom':'The target time is out of range for this distance.',
+      'goal.bad10k':'Enter your 10 km result in minutes and seconds, for example 52 min and 30 s.', 'goal.saveFail':'Couldn’t save the plan. Try again.',
+      'u.hours':'Hours', 'u.min':'Minutes', 'u.sec':'Seconds', 'u.h':'h', 'u.m':'min', 'u.s':'s',
+      'dist.5':'5 km', 'dist.10':'10 km', 'dist.21':'Half marathon', 'dist.42':'Marathon',
+      'race.5':'5 km race', 'race.10':'10 km race', 'race.21':'Half marathon', 'race.42':'Marathon',
+      'race.in': v => ({ '42':'marathon', '21':'half marathon' }[v.k] || 'race')+' in '+v.n+' '+enPl(v.n,'day','days'),
+      'race.today': () => 'race day is today', 'race.past': () => 'race is behind you',
+      'phase.base':'Base', 'phase.build':'Build', 'phase.peak':'Peak', 'phase.taper':'Taper',
+      'plan.title':'Plan', 'plan.week':'Week {a} of {b}', 'plan.disclaimer':'The plan is a guide based on common training principles. If you feel pain or get injured, skip the session and see a doctor.',
+      'plan.editGoal':'Edit goal and training days', 'plan.upcoming':'Coming up', 'w.test':'5 km time trial', 'cal.test':'Test',
+      'rpe.label':'How did it feel? (optional)', 'rpe.scale':'1 = very easy, 10 = all-out', 'rpe.1':'very easy', 'rpe.3':'easy, could chat', 'rpe.5':'moderate', 'rpe.7':'hard', 'rpe.9':'all-out', 'rpe.list':'effort {n}/10',
+      'adapt.faster':'Your form is rising! Hard sessions are going great, paces are {s} s/km faster.',
+      'trend.up':'Form is rising', 'trend.down':'Form is dropping', 'trend.flat':'Form is flat',
+      'trend.ahead':'You’re {x} ahead of plan.', 'trend.behind':'You’re {x} behind plan.', 'trend.onTrack':'You’re on track.',
+      'trend.tip.down':'Watch out for fatigue: sleep, food, and keep easy runs truly easy.', 'trend.tip.flat':'That’s fine, form often comes with rest. Keep easy runs easy.',
+      'form.title':'Your form', 'form.now':'Estimated race time now: {t}', 'form.goal':'Goal: {t}', 'form.plan':'This week’s paces are based on {t}',
+      'form.unknown':'We’ll measure your form at the next time trial.',
+      'adapt.slower':'Your form is dropping for now: hard sessions were too tough, paces are {s} s/km slower.',
+      'adapt.tired':'Your plan adapted: recent runs felt tiring, paces are {s} s/km slower so you can recover.',
+      'adapt.test':'Time trial: estimated race time {time}; paces recalculated.',
+      'adapt.testDist':'For the time trial, log only the 5 km itself without warm-up and cool-down, otherwise we can’t evaluate it.',
+      'adapt.pause':'You haven’t run for a while. Recalculate the plan so it starts from your current form.', 'plan.howTo':'How to run this workout ›',
+      'd.what':'What it is', 'd.why':'Why', 'd.how':'How to do it', 'd.points':'Key points', 'd.addCal':'Add to calendar', 'd.close':'Close',
+      'd.methodLink':'How your plan works', 'd.methodTitle':'How your plan works', 'd.methodIntro':'A few principles behind every workout in your plan.',
+      'd.phase':'Phase: {p}', 'd.week':'Week {a} of {b}', 'cal.exportAll':'Add plan to your phone calendar', 'cal.exportNone':'There are no upcoming workouts in your plan.',
+      'cal.exportDone':'Your calendar will open; confirm adding the events.', 'plan.today':'Today', 'plan.tomorrow':'Tomorrow', 'plan.next':'Next up', 'plan.log':'Log run', 'plan.editTimes':'Edit times',
+      'plan.pace':'Pace', 'plan.noMore':'No more workouts left in your plan.', 'plan.kmPlanned':'{km} km planned', 'plan.paceRange':'pace {a} – {b} /km',
+      'plan.notAvail':'Not available', 'plan.rest':'Rest day', 'plan.recovery':'Recovery', 'plan.extra':'Extra run logged',
+      'week.this':'This week', 'week.next':'Next week', 'week.last':'Last week', 'week.prev':'Previous week', 'week.nextAria':'Next week',
+      'badge.done':'Done', 'badge.today':'Today', 'badge.key':'Key', 'badge.block':'Blocked', 'badge.run':'Run',
+      'w.easy':'Easy run', 'w.shake':'Shakeout run', 'w.tempo':'Tempo run', 'w.mp':'Marathon pace', 'w.rp':'Race pace run', 'w.long':'Long run',
+      'seg.warm':'2 km warm-up', 'seg.cool':'2 km cool-down', 'seg.tempo':'{x} km at tempo pace', 'seg.mp':'{x} km at marathon pace', 'seg.rp':'{x} km at race pace',
+      'tip.long':'Conversational pace. Bring water.', 'tip.easy':'Easy and relaxed.', 'tip.strides':'Easy, finish with 4 short strides.',
+      'tip.shake':'Short and loose, save your legs.', 'tip.raceLong':'Hold back in the first half, you’ll thank yourself at the finish.', 'tip.raceShort':'Warm up well, start sensibly and give the last kilometre everything.',
+      'replan.dirty':'Your availability changed. We’ll recalculate the plan from today; past workouts stay.', 'replan.btn':'Recalculate plan', 'replan.busy':'Calculating…',
+      'replan.dropped': v => v.n+' '+enPl(v.n,'workout','workouts')+' didn’t fit into your free time. Try freeing up some time in the calendar.',
+      'replan.fail':'Couldn’t recalculate the plan. Try again.',
+      'runs.title':'My runs', 'runs.hello':'Hi, {name}', 'runs.coast':'Longest run on the way to your goal', 'runs.longestOf':'my longest run of {km} km',
+      'runs.add':'Add run', 'runs.date':'Date', 'runs.km':'Distance (km)', 'runs.time':'Time', 'runs.note':'Route or note',
+      'runs.notePh':'Sliema → St Julian’s and back', 'runs.save':'Save run', 'runs.saving':'Saving…', 'runs.saved':'Saved',
+      'runs.needDate':'Pick the date of the run.', 'runs.needKm':'Enter the distance in km, for example 10.5.', 'runs.needTime':'Enter the time of the run.',
+      'runs.saveFail':'Couldn’t save the run. Try again.', 'runs.delFail':'Couldn’t delete the run.', 'runs.loadFail':'Couldn’t load your runs.',
+      'runs.empty':'No runs yet. Add your first one above.', 'runs.delAria':'Delete {km} km run from {date}', 'runs.shareAria':'Share {km} km run from {date}',
+      'runs.savedShare':'Saved. Want to show it off?',
+      'c.delete':'Delete', 'c.loading':'Loading…',
+      'photo.label':'Photo (optional)', 'photo.add':'Add photo', 'photo.change':'Change photo', 'photo.remove':'Remove', 'photo.removeFull':'Remove photo',
+      'photo.alt':'Run photo', 'photo.fail':'Couldn’t process the photo. Try another one.', 'photo.upFail':'Run saved, but the photo couldn’t be uploaded.',
+      'photo.addAria':'Add a photo to the run from {date}', 'photo.uploading':'Uploading photo…', 'photo.added':'Photo added.', 'c.done':'Done', 'goal.notSet':'not set', 'c.sure':'Sure?', 'c.save':'Save', 'c.cancel':'Cancel', 'c.share':'Share', 'c.saved':'Saved.',
+      'prof.title':'Profile', 'prof.nameAria':'My name on the leaderboard', 'prof.saveName':'Save name', 'prof.nameEmpty':'Name can’t be empty.',
+      'prof.nameFail':'Couldn’t save your name.', 'prof.lang':'Language', 'prof.theme':'Appearance', 'prof.light':'Light', 'prof.dark':'Dark', 'prof.system':'System', 'prof.bg':'Background colour', 'prof.color':'My colour', 'prof.colorHint':'Others in your group will see you in this colour.', 'prof.colorFail':'Couldn’t save your colour.', 'prof.logout':'Log out',
+      'grp.title':'Groups', 'grp.group':'Group', 'grp.code':'Invite code', 'grp.join':'Join', 'grp.newName':'New group name', 'grp.create':'Create',
+      'grp.close':'Close', 'grp.addOrCreate':'+ Join or create', 'grp.none':'You’re not in any group yet. Join with a code or create your own.',
+      'grp.loadFail':'Couldn’t load your groups.', 'grp.needCode':'Enter an invite code.', 'grp.joinFail':'Couldn’t join the group.',
+      'grp.needName':'Enter a group name.', 'grp.createFail':'Couldn’t create the group.', 'grp.joined':'You joined {name}.',
+      'grp.by':'Rank by', 'grp.period':'Period', 'grp.modePlan':'Plan completion', 'grp.modeKm':'Distance', 'grp.week':'Week', 'grp.month':'Month',
+      'grp.loading':'Loading leaderboard…', 'grp.boardFail':'Couldn’t load the leaderboard.', 'grp.me':'(me)',
+      'grp.planDetail': v => v.done+' of '+v.planned+' '+enPl(v.planned,'workout','workouts')+', '+v.km+' km',
+      'grp.noPlan':'no plan in this period yet, {km} km', 'grp.runs': v => v.n+' '+enPl(v.n,'run','runs'),
+      'grp.longest':'longest {km} km', 'grp.bestPace':'pace {p}',
+      'grp.hint':'Completion compares everyone with their own plan, so beginners and experienced runners compete fairly. A workout counts as done when you log a run that day.',
+      'grp.inviteCode':'Invite code', 'grp.copy':'Copy', 'grp.copied':'Copied', 'grp.shareInvite':'Invite friends',
+      'grp.leave':'Leave group', 'grp.tapHint':'Tap a name to see their runs.',
+      'mon.title':'Group calendar', 'mon.noGroup':'The calendar shows your group’s runs. Join or create a group first.',
+      'mon.prev':'Previous month', 'mon.next':'Next month', 'mon.tap':'Tap a day to see who ran and how.', 'mon.mine':'your planned workout', 'mon.lgDone':'run or completed workout', 'mon.lgPlanned':'planned workout', 'mon.lgMissed':'missed workout',
+      'mon.legend': v => v.km+' km, plan '+(v.pct==null ? '–' : v.pct+' %'), 'mon.runners': v => v.n+' '+enPl(v.n,'runner','runners'),
+      'mon.run':'{km} km, {time}, {pace} /km', 'mon.plan':'Plan: {w}', 'mon.done':'done', 'mon.missed':'missed', 'mon.planned':'planned',
+      'mon.monthPct':'Plan this month: {p}', 'mon.rest':'Rest day: {names}', 'mon.nobody':'Nobody ran or had a workout on this day.',
+      'mon.loading':'Loading calendar…', 'mon.fail':'Couldn’t load the calendar.', 'mon.group':'Group', 'grp.coastAria':'Top 5 runners on the way to the goal', 'grp.coastPlan':'The finish flag means 100 % of the plan completed.', 'grp.coastKm':'The finish flag belongs to the distance leader.', 'grp.feed':'Recent runs in the group',
+      'grp.feedEmpty':'No runs yet. Be the first!', 'grp.feedFail':'Couldn’t load the group’s runs.', 'grp.memberRuns':'Recent runs',
+      'grp.memberGoal':'Goal: {race}, {date}', 'grp.memberNoGoal':'No goal set yet', 'grp.memberMonth': v => v.km+' km this month, '+v.n+' '+enPl(v.n,'run','runs'),
+      'grp.memberEmpty':'No runs yet.', 'grp.loadingRuns':'Loading runs…', 'grp.longestAll':'longest run {km} km', 'grp.leaveSure':'Really leave?', 'grp.leaveFail':'Couldn’t leave the group.',
+      'cal.title':'When I can’t train', 'cal.sub':'We only schedule workouts in your free time, preferably early morning or evening when it’s cooler.',
+      'cal.busy':'Busy', 'cal.planned':'Planned workout', 'cal.regular':'Recurring', 'cal.days':'Days', 'cal.from':'From', 'cal.to':'To', 'cal.what':'What is it',
+      'cal.workPh':'Work', 'cal.holidayPh':'Holiday', 'cal.addRule':'+ Add recurring time', 'cal.exc':'Exceptions', 'cal.addExc':'+ Add exception',
+      'cal.noRules':'Nothing yet. Add work or a class, for example.', 'cal.noExc':'No exceptions. Add a holiday, business trip or shift.',
+      'cal.noTraining':'no training', 'cal.needDay':'Pick at least one day.', 'cal.timeOrder':'The end time must be after the start time.',
+      'cal.dateOrder':'The end date can’t be before the start date.', 'cal.saveFail':'Couldn’t save.', 'cal.delFail':'Couldn’t delete.',
+      'cal.unavailable':'Busy', 'cal.exception':'Exception', 'cal.long':'Long', 'cal.run':'Run', 'cal.tempo':'Tempo', 'cal.race':'Race',
+      'nav.main':'Main navigation', 'nav.plan':'Plan', 'nav.runs':'Runs', 'nav.group':'Group', 'nav.cal':'Calendar', 'nav.profile':'Profile',
+      'share.runText':'Ran {km} km in {time} ({pace} /km). Training with The Maltese Pacer.',
+      'share.invite':'Join my group “{group}” on The Maltese Pacer. Let’s train for race day together!',
+      'share.cardDone':'Run done', 'share.cardPace':'Pace', 'share.cardTime':'Time', 'share.cardPlan':'Week {a} of {b}, {race} {date}',
+      'share.imgSaved':'Image downloaded and text copied.', 'share.copied':'Text copied, paste it wherever you like.', 'share.fail':'Sharing didn’t work.'
+    }
+  };
+  const DAY_SHORT = { sk:['Po','Ut','St','Št','Pi','So','Ne'], en:['Mo','Tu','We','Th','Fr','Sa','Su'] };
+  const DAY_LONG  = { sk:['pondelok','utorok','streda','štvrtok','piatok','sobota','nedeľa'], en:['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] };
+  const LOCALE = { sk:'sk-SK', en:'en-GB' };
+  let LANG = 'sk';
+  try{ LANG = localStorage.getItem('mp-lang') || ((navigator.language||'').toLowerCase().startsWith('sk') || (navigator.language||'').toLowerCase().startsWith('cs') ? 'sk' : 'en'); }catch(e){}
+  if(!L[LANG]) LANG = 'sk';
+  function t(key, v){
+    v = v || {};
+    const val = (L[LANG][key] !== undefined) ? L[LANG][key] : (L.sk[key] !== undefined ? L.sk[key] : key);
+    if(typeof val === 'function') return val(v);
+    return val.replace(/\{(\w+)\}/g, (m, k) => v[k] != null ? v[k] : m);
+  }
+  function applyI18n(){
+    document.documentElement.lang = LANG;
+    document.querySelectorAll('[data-i18n]').forEach(e => { e.textContent = t(e.dataset.i18n); });
+    document.querySelectorAll('[data-i18n-ph]').forEach(e => { e.placeholder = t(e.dataset.i18nPh); });
+    document.querySelectorAll('[data-i18n-aria]').forEach(e => { e.setAttribute('aria-label', t(e.dataset.i18nAria)); });
+    $('pNext').setAttribute('aria-label', t('week.nextAria'));
+    document.querySelectorAll('[data-lang]').forEach(b => b.setAttribute('aria-pressed', b.dataset.lang===LANG ? 'true':'false'));
+  }
+
+  const SUPABASE_URL = 'https://oyyxmegcsfnyypsucfbo.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_qANjVZfaezRIliT_qWtL5w_Ng_Wldks';
+  const MARATHON = 42.195;
+  const DISTS = {
+    '5':  { km:5,       presets:[1800,1500],   under:['30 min','25 min'], clock:'mmss', limits:[720,3600],   maxWeeks:8,  taper:1,    peak:1,    peakLong:[10,8],  startLong:5,  minEasy:3, minQ:6,  lead:7 },
+    '10': { km:10,      presets:[3600,3000],   under:['60 min','50 min'], clock:'mmss', limits:[1500,7200],  maxWeeks:10, taper:1,    peak:1,    peakLong:[14,12], startLong:6,  minEasy:4, minQ:7,  lead:7 },
+    '21': { km:21.0975, presets:[8100,7200],   under:['2:15','2:00'],     clock:'hmm',  limits:[3600,14400], maxWeeks:14, taper:2,    peak:2,    peakLong:[19,18], startLong:8,  minEasy:5, minQ:8,  lead:10 },
+    '42': { km:42.195,  presets:[16200,14400], under:['4:30','4:00'],     clock:'hmm',  limits:[7200,28800], maxWeeks:20, taper:null, peak:null, peakLong:[32,30], startLong:12, minEasy:5, minQ:10, lead:14 }
+  };
+  const distKey = km => { const n = Number(km) || MARATHON; return n < 7 ? '5' : n < 15 ? '10' : n < 30 ? '21' : '42'; };
+  const goalDist = g => DISTS[distKey(g && g.race_distance_km)];
+  const riegel = (tm, from, to) => tm * Math.pow(to/from, 1.06);
+  const PHASES = ['base','build','peak','taper'];
+
+  if(!window.supabase){ document.body.textContent = t('err.supabase'); return; }
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  const S = { me:null, profile:null, groups:[], group:null, period:'month', mode:'plan', runs:[],
+              goal:null, rules:[], exc:[], planned:[], maxWeek:0, weekOffset:0, tab:'runs', editingGoal:false, planError:null };
+  try{ S.group = localStorage.getItem('mp-group'); }catch(e){}
+
+  // Pozvánka cez odkaz ?join=KOD
+  try{
+    const q = new URLSearchParams(location.search).get('join');
+    if(q){ localStorage.setItem('mp-join', q.toUpperCase()); history.replaceState(null, '', location.pathname + location.hash); }
+  }catch(e){}
+  const pendingJoin = () => { try{ return localStorage.getItem('mp-join'); }catch(e){ return null; } };
+
+  // ================= pomocné =================
+  const pad = n => String(n).padStart(2,'0');
+  const iso = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+  const parse = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y,m-1,d); };
+  const addDays = (d,n) => { const x = new Date(d); x.setDate(x.getDate()+n); return x; };
+  const today0 = () => { const d = new Date(); d.setHours(0,0,0,0); return d; };
+  const dayIdx = d => (d.getDay()+6)%7;
+  const monday = d => addDays(d, -dayIdx(d));
+  const daysBetween = (a,b) => Math.round((b - a)/86400000);
+  const toMin = x => { if(!x) return null; const [h,m] = x.split(':').map(Number); return h*60+m; };
+  const hm = min => Math.floor(min/60)+':'+pad(Math.round(min%60));
+  const hmFull = min => pad(Math.floor(min/60))+':'+pad(Math.round(min%60));
+  const parseKm = v => { const n = parseFloat(String(v).replace(',', '.')); return isFinite(n) && n > 0 ? n : null; };
+  const fmtPace = sec => { if(!isFinite(sec) || sec<=0) return '–:––'; const r = Math.round(sec); return Math.floor(r/60)+':'+pad(r%60); };
+  const fmtKm = n => Number(n).toLocaleString(LOCALE[LANG],{maximumFractionDigits:1});
+  const fmtDur = sec => { const h=Math.floor(sec/3600), m=Math.floor(sec%3600/60), s=sec%60; return (h? h+':'+pad(m) : m)+':'+pad(s); };
+  const fmtDate = s => parse(s).toLocaleDateString(LOCALE[LANG], LANG==='sk' ? {weekday:'short',day:'numeric',month:'numeric',year:'numeric'} : {weekday:'short',day:'numeric',month:'short',year:'numeric'});
+  const fmtShort = d => LANG==='sk' ? d.getDate()+'. '+(d.getMonth()+1)+'.' : d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if(cls) e.className = cls; if(text!=null) e.textContent = text; return e; };
+  const days = () => DAY_SHORT[LANG], daysLong = () => DAY_LONG[LANG];
+  // ---------- načítavanie ----------
+  function loaderEl(text, tag){
+    const box = el(tag || 'div', 'loader'); box.setAttribute('role','status');
+    const f = el('div','fig'); f.setAttribute('aria-hidden','true');
+    box.append(f, el('span', null, text || t('c.loading')));
+    return box;
+  }
+  let bootTimer;
+  function showBoot(){ $('bootText').textContent = t('c.loading'); $('boot').hidden = false; clearTimeout(bootTimer); bootTimer = setTimeout(hideBoot, 15000); }
+  function hideBoot(){ $('boot').hidden = true; clearTimeout(bootTimer); }
+
+  // ---------- výber času koliesokami (ako na iPhone) ----------
+  const WH = 34;
+  const nums = (a, b, padded) => Array.from({ length: b - a + 1 }, (_, i) => ({ v: a + i, label: padded ? pad(a + i) : String(a + i) }));
+  function makeWheel(parent, items, opts){
+    const col = el('div','wcol'), w = el('div','wheel');
+    w.tabIndex = 0; w.setAttribute('role','spinbutton'); w.setAttribute('aria-label', opts.label || '');
+    w.setAttribute('aria-valuemin', '0'); w.setAttribute('aria-valuemax', String(items.length - 1));
+    col.appendChild(w); if(opts.unit) col.appendChild(el('span','wunit', opts.unit)); parent.appendChild(col);
+    let idx = 0, lock = false, tmr;
+    const nodes = [];
+    const paint = () => { nodes.forEach((c,i) => c.classList.toggle('sel', i === idx)); w.setAttribute('aria-valuenow', String(idx)); w.setAttribute('aria-valuetext', items[idx].label + (opts.unit ? ' ' + opts.unit : '')); };
+    const sync = smooth => { lock = true; if(smooth && w.scrollTo) w.scrollTo({ top: idx*WH, behavior:'smooth' }); else w.scrollTop = idx*WH; clearTimeout(w._lt); w._lt = setTimeout(() => lock = false, smooth ? 400 : 60); };
+    const choose = (n, smooth) => { n = Math.max(0, Math.min(items.length - 1, n)); if(n === idx){ sync(smooth); return; } idx = n; paint(); sync(smooth); opts.onChange && opts.onChange(items[idx].v); };
+    w.appendChild(el('div','sp'));
+    items.forEach((it, i) => { const d = el('div','it', it.label); d.addEventListener('click', () => choose(i, true)); w.appendChild(d); nodes.push(d); });
+    w.appendChild(el('div','sp'));
+    w.addEventListener('scroll', () => {
+      if(lock) return; clearTimeout(tmr);
+      tmr = setTimeout(() => { const n = Math.max(0, Math.min(items.length - 1, Math.round(w.scrollTop / WH))); if(n !== idx){ idx = n; paint(); opts.onChange && opts.onChange(items[idx].v); } }, 90);
+    });
+    w.addEventListener('keydown', e => { if(e.key === 'ArrowUp' || e.key === 'ArrowDown'){ e.preventDefault(); choose(idx + (e.key === 'ArrowDown' ? 1 : -1), true); } });
+    if(window.ResizeObserver) new ResizeObserver(() => { if(w.clientHeight > 0) sync(false); }).observe(w);
+    const api = { el: w, get: () => items[idx].v, set(v){ const n = items.findIndex(it => it.v === v); idx = n < 0 ? 0 : n; paint(); sync(false); } };
+    api.set(opts.value !== undefined ? opts.value : items[0].v);
+    return api;
+  }
+  function makeWheels(container, spec){
+    container.textContent = ''; container.className = 'wheels';
+    const out = {};
+    spec.forEach((f, i) => { if(i) container.appendChild(el('span','wsep', ':')); out[f.key] = makeWheel(container, f.items, f); });
+    return out;
+  }
+
+  // ---------- malé pole s časom, kolieska sa otvoria až po ťuknutí ----------
+  function closePicker(){ const d = $('picker'); if(typeof d.close === 'function') d.close(); else d.removeAttribute('open'); }
+  $('picker').addEventListener('click', e => { if(e.target === $('picker')) closePicker(); });
+  function makeTimeField(container, spec, opts){
+    opts = opts || {};
+    container.textContent = ''; container.className = '';
+    const vals = {}; spec.forEach(f => vals[f.key] = f.value !== undefined ? f.value : f.items[0].v);
+    const btn = el('button','tfield'); btn.type = 'button';
+    const v = el('span','v'), u = el('span','u', spec.map(f => f.unit).join(' : '));
+    btn.append(v, u); container.appendChild(btn);
+    const text = () => spec.map(f => { const it = f.items.find(i => i.v === vals[f.key]) || f.items[0]; return it.label; }).join(':');
+    const paintF = () => {
+      v.textContent = (opts.emptyIf && opts.emptyIf(vals)) ? opts.emptyText() : text();
+      btn.setAttribute('aria-label', (opts.title ? opts.title() + ': ' : '') + v.textContent);
+    };
+    btn.addEventListener('click', () => {
+      const body = $('pickerBody'); body.textContent = '';
+      const h = el('h3', null, opts.title ? opts.title() : ''); h.id = 'pickerTitle'; body.appendChild(h);
+      const box = el('div'); body.appendChild(box);
+      makeWheels(box, spec.map(f => ({ ...f, value: vals[f.key], onChange: x => { vals[f.key] = x; paintF(); opts.onChange && opts.onChange(); } })));
+      const done = el('button','primary', t('c.done')); done.type = 'button';
+      done.addEventListener('click', () => { closePicker(); btn.focus(); });
+      body.appendChild(done);
+      const d = $('picker'); if(typeof d.showModal === 'function'){ if(!d.open) d.showModal(); } else d.setAttribute('open','');
+    });
+    const api = { el: btn };
+    spec.forEach(f => { api[f.key] = { get: () => vals[f.key], set: x => { vals[f.key] = x; paintF(); }, el: btn }; });
+    paintF();
+    return api;
+  }
+
+  // ---------- farby používateľov ----------
+  const PALETTE = [
+    ['#F0B400','žltá','yellow'], ['#E07A2E','oranžová','orange'], ['#C2302A','červená','red'], ['#D6457A','ružová','pink'],
+    ['#A23E8C','purpurová','magenta'], ['#7A5CC2','fialová','purple'], ['#3B5BDB','modrá','blue'], ['#1A6A8A','morská','sea blue'],
+    ['#0E8C9A','tyrkysová','teal'], ['#2E9E6A','zelená','green'], ['#5B6B2E','olivová','olive'], ['#6B4E3D','hnedá','brown']
+  ];
+  function defaultColor(id){ let h = 0; String(id||'').split('').forEach(c => h = (h*31 + c.charCodeAt(0)) >>> 0); return PALETTE[h % PALETTE.length][0]; }
+  const colorOf = (id, c) => (c && /^#[0-9A-Fa-f]{6}$/.test(c)) ? c : defaultColor(id);
+  const myColor = () => colorOf(S.me && S.me.id, S.profile && S.profile.color);
+  function textOn(hex){ const n = parseInt(hex.slice(1),16), r = n>>16, g = (n>>8)&255, b = n&255; return (0.299*r + 0.587*g + 0.114*b) > 150 ? '#1A1400' : '#FFFFFF'; }
+  function nameWithDot(name, color){ const w = el('span','nm'); const d = el('span','dot'); d.style.background = color; w.append(d, el('span', null, name)); return w; }
+  S.memCache = {};
+  async function groupMembers(gid){
+    const mem = await sb.from('group_members').select('user_id, profiles(display_name, color)').eq('group_id', gid);
+    if(mem.error) throw mem.error;
+    const list = (mem.data||[]).map(m => ({ id:m.user_id, name:(m.profiles && m.profiles.display_name) || '', color: colorOf(m.user_id, m.profiles && m.profiles.color) }));
+    S.memCache[gid] = list; return list;
+  }
+  const memColor = (gid, uid) => { const m = (S.memCache[gid]||[]).find(x => x.id === uid); return m ? m.color : (uid === (S.me && S.me.id) ? myColor() : defaultColor(uid)); };
+
+  function errText(err, fallbackKey){
+    const m = (err && err.message) || '';
+    if(/profiles.*color|column .*color/i.test(m)) return t('err.db');
+    if(/Invalid login credentials/i.test(m)) return t('err.badLogin');
+    if(/Email not confirmed/i.test(m)) return t('err.notConfirmed');
+    if(/already registered/i.test(m)) return t('err.already');
+    if(/Password should be/i.test(m)) return t('auth.pwShort');
+    if(/rate limit/i.test(m)) return t('err.rate');
+    if(/runs_realistic_pace/.test(m)) return t('err.paceTypo');
+    if(/relation .* does not exist|Could not find the table|race_distance_km|goal_kind_check|goal_time_sec_check|group_adherence|photo_path|Bucket not found|rpe|pace_factor|adapt_|fitness_at|planned_workouts_kind_check/i.test(m)) return t('err.db');
+    if(/Neplatný pozývací kód/.test(m)) return t('err.code');
+    if(/Nie si prihlásený/.test(m)) return t('err.auth');
+    return t(fallbackKey || 'err.generic');
+  }
+  function armButton(btn, labelKey, confirmKey, action){
+    let tm;
+    btn.addEventListener('click', ()=>{
+      if(!btn.classList.contains('armed')){ btn.classList.add('armed'); btn.textContent = t(confirmKey); tm = setTimeout(()=>{ btn.classList.remove('armed'); btn.textContent = t(labelKey); }, 3000); return; }
+      clearTimeout(tm); btn.disabled = true; action();
+    });
+  }
+  let toastT;
+  function toast(msg){ const e = $('toast'); e.textContent = msg; e.hidden = false; clearTimeout(toastT); toastT = setTimeout(()=> e.hidden = true, 3500); }
+
+  // ================= jazyk =================
+  function setLang(l){
+    LANG = l; try{ localStorage.setItem('mp-lang', l); }catch(e){}
+    applyI18n(); setAuthMode(signUpMode); renderJoinNotice(); renderRpe(); renderLook(); if(S.me) renderSwatches();
+    if(S.me){ renderPlanTab(); renderRuns(); renderGroups(); if(S.tab==='group') loadBoard(); if(S.tab==='month') loadMonth(); $('hello').textContent = S.profile && S.profile.display_name ? t('runs.hello',{name:S.profile.display_name}) : ''; }
+  }
+  document.querySelectorAll('[data-lang]').forEach(b => b.addEventListener('click', ()=> setLang(b.dataset.lang)));
+
+  // ================= záložky =================
+  function showTab(name){
+    S.tab = name;
+    ['plan','runs','group','month','profile'].forEach(x => { $('tab-'+x).hidden = x!==name; });
+    document.querySelectorAll('#tabs button').forEach(b => { if(b.dataset.tab===name) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); });
+    window.scrollTo(0,0);
+    if(name==='group') loadBoard();
+    if(name==='month') loadMonth();
+    if(name==='profile'){ renderSwatches(); renderLook(); }
+    if(name==='runs') renderRuns();
+  }
+  document.querySelectorAll('#tabs button').forEach(b => b.addEventListener('click', ()=> showTab(b.dataset.tab)));
+
+  // ================= prihlásenie =================
+  let signUpMode = false;
+  function setAuthMode(up){
+    signUpMode = up;
+    $('authTitle').textContent = t(up ? 'auth.signup' : 'auth.login');
+    $('nameField').hidden = !up;
+    $('authBtn').textContent = t(up ? 'auth.signupBtn' : 'auth.loginBtn');
+    $('authSwitch').textContent = t(up ? 'auth.toLogin' : 'auth.toSignup');
+    $('authPass').autocomplete = up ? 'new-password' : 'current-password';
+  }
+  function renderJoinNotice(){ const c = pendingJoin(); $('joinNotice').hidden = !c; if(c) $('joinNotice').textContent = t('auth.joinAfter',{code:c}); }
+  $('authSwitch').addEventListener('click', ()=>{ setAuthMode(!signUpMode); $('authMsg').textContent=''; });
+  $('authForm').addEventListener('submit', async ev=>{
+    ev.preventDefault();
+    const msg = $('authMsg'); msg.className='msg'; msg.textContent='';
+    const email = $('authEmail').value.trim(), password = $('authPass').value, name = $('authName').value.trim();
+    if(!email){ msg.textContent=t('auth.needEmail'); return; }
+    if(password.length < 8){ msg.textContent=t('auth.pwShort'); return; }
+    if(signUpMode && !name){ msg.textContent=t('auth.needName'); return; }
+    const btn = $('authBtn'); btn.disabled = true;
+    try{
+      if(signUpMode){
+        const { data, error } = await sb.auth.signUp({ email, password, options:{ data:{ display_name:name }, emailRedirectTo: location.origin + location.pathname } });
+        if(error) throw error;
+        if(!data.session){ setAuthMode(false); msg.className='msg ok'; msg.textContent=t('auth.signupDone'); }
+      } else {
+        const { error } = await sb.auth.signInWithPassword({ email, password });
+        if(error) throw error;
+      }
+    }catch(e){ msg.textContent = errText(e); }
+    btn.disabled = false;
+  });
+  $('logout').addEventListener('click', ()=> sb.auth.signOut());
+
+  sb.auth.onAuthStateChange((event, session)=>{
+    const uid = session && session.user ? session.user.id : null;
+    if(uid && (!S.me || S.me.id !== uid)){ S.me = session.user; setTimeout(loadAll, 0); }
+    if(!uid){ hideBoot(); S.me = null; $('appView').hidden = true; $('tabs').hidden = true; $('authView').hidden = false; setAuthMode(false); renderJoinNotice(); }
+  });
+
+  // ================= načítanie =================
+  async function loadAll(){
+    showBoot();
+    $('authView').hidden = true; $('appView').hidden = false; $('tabs').hidden = false;
+    $('date').value = iso(today0());
+    await Promise.all([loadProfile(), loadGroups(), loadRuns(), loadPlanData()]);
+    const joined = await consumeJoin();
+    renderPlanTab(); showTab(joined ? 'group' : S.tab);
+    hideBoot();
+  }
+  async function consumeJoin(){
+    const code = pendingJoin(); if(!code) return false;
+    try{ localStorage.removeItem('mp-join'); }catch(e){}
+    const { data, error } = await sb.rpc('join_group', { p_code: code });
+    const n = $('groupNotice');
+    if(error){ n.hidden = false; n.textContent = errText(error, 'grp.joinFail'); return true; }
+    S.group = data; try{ localStorage.setItem('mp-group', data); }catch(e){}
+    await loadGroups();
+    const g = S.groups.find(x => x.id === data);
+    n.hidden = false; n.textContent = t('grp.joined', { name: g ? g.name : code });
+    return true;
+  }
+  async function loadProfile(){
+    const { data } = await sb.from('profiles').select('id, display_name, color').eq('id', S.me.id).maybeSingle();
+    S.profile = data || { id:S.me.id, display_name:'' };
+    $('hello').textContent = S.profile.display_name ? t('runs.hello',{name:S.profile.display_name}) : '';
+    $('myName').value = S.profile.display_name || '';
+    renderSwatches();
+  }
+  async function loadRuns(){
+    const { data, error } = await sb.from('runs').select('id, run_date, distance_km, duration_sec, note, rpe, photo_path, created_at').eq('user_id', S.me.id).order('run_date',{ascending:false}).order('created_at',{ascending:false}).limit(1000);
+    if(error){ $('runs').textContent=''; $('runs').appendChild(el('li','empty',t('runs.loadFail'))); return; }
+    S.runs = data || []; renderRuns();
+  }
+  async function loadPlanned(){
+    const p = await sb.from('planned_workouts').select('*').eq('user_id', S.me.id).gte('workout_date', iso(addDays(today0(), -120))).order('workout_date');
+    if(p.error) throw p.error;
+    S.planned = p.data || []; S.maxWeek = S.planned.reduce((m,x)=>Math.max(m,x.week_no),0);
+  }
+  async function loadPlanData(){
+    const [g, r, e] = await Promise.all([
+      sb.from('training_goals').select('*').eq('user_id', S.me.id).maybeSingle(),
+      sb.from('availability_rules').select('*').eq('user_id', S.me.id).order('weekday').order('start_time'),
+      sb.from('availability_exceptions').select('*').eq('user_id', S.me.id).order('date_from')
+    ]);
+    const firstErr = [g,r,e].find(x => x.error);
+    S.planError = firstErr ? firstErr.error : null;
+    S.goal = g.data || null; S.rules = r.data || []; S.exc = e.data || [];
+    try{ await loadPlanned(); }catch(err){ S.planError = S.planError || err; }
+  }
+
+  // ================= texty tréningov (podľa jazyka) =================
+  const isMarGoal = () => goalDist(S.goal).km === MARATHON;
+  function wTitle(p){
+    if(p.kind==='test') return t('w.test');
+    if(p.kind==='long') return t('w.long');
+    if(p.kind==='tempo') return t('w.tempo');
+    if(p.kind==='mp') return isMarGoal() ? t('w.mp') : t('w.rp');
+    if(p.kind==='race') return t('race.'+distKey(p.distance_km));
+    return p.week_no === S.maxWeek ? t('w.shake') : t('w.easy');
+  }
+  function wSegments(p){
+    const q = fmtKm(Math.max(Number(p.distance_km) - 4, 1));
+    return [t('seg.warm'), t(p.kind==='tempo' ? 'seg.tempo' : (isMarGoal() ? 'seg.mp' : 'seg.rp'), {x:q}), t('seg.cool')];
+  }
+  function wTip(p){
+    if(p.kind==='test') return (INFO[LANG].test || INFO.sk.test).what;
+    if(p.kind==='long') return t('tip.long');
+    if(p.kind==='race') return Number(p.distance_km) >= 21 ? t('tip.raceLong') : t('tip.raceShort');
+    if(p.kind==='easy') return p.week_no === S.maxWeek ? t('tip.shake') : p.phase==='base' ? t('tip.strides') : t('tip.easy');
+    return '';
+  }
+
+  // ================= generovanie plánu =================
+  // Krivka formy: od aktuálnej výkonnosti (dátum merania) sa tempá postupne posúvajú
+  // tak, aby na konci vrcholovej fázy zodpovedali cieľu. Kontrolné behy krivku znovu ukotvia.
+  function goalTarget(goal){
+    if(goal.goal_kind === 'finish') return null;
+    if(goal.goal_time_sec) return goal.goal_time_sec;
+    if(goal.goal_kind === 'sub400') return 4*3600 - 60;
+    if(goal.goal_kind === 'sub430') return 4.5*3600 - 60;
+    return null;
+  }
+  function currentRace(goal){ return goal.recent_10k_sec ? riegel(goal.recent_10k_sec, 10, goalDist(goal).km) : null; }
+  function raceCurve(goal){
+    const D = goalDist(goal), dk = D.km, target = goalTarget(goal), current = currentRace(goal);
+    let start, end;
+    if(target && current){ end = Math.max(target, current*0.92); start = Math.max(current, end); }
+    else if(target){ end = target; start = target*1.05; }
+    else if(current){ start = end = current; }
+    else { start = end = riegel(5*3600, MARATHON, dk); }
+    const taperW = D.taper ?? 3;
+    const peakEnd = addDays(monday(parse(goal.race_date)), -(taperW-1)*7 - 1);
+    const anchor = goal.fitness_at ? parse(goal.fitness_at) : (goal.updated_at ? parse(String(goal.updated_at).slice(0,10)) : today0());
+    return { start, end, anchor, peakEnd, target, current };
+  }
+  function raceAt(goal, date){
+    const c = raceCurve(goal), span = daysBetween(c.anchor, c.peakEnd);
+    const f = span <= 0 ? 1 : Math.max(0, Math.min(1, daysBetween(c.anchor, date || today0()) / span));
+    return (c.start + (c.end - c.start) * f) * (Number(goal.pace_factor) || 1);
+  }
+  function paceZones(goal, date){
+    const dk = goalDist(goal).km, race = raceAt(goal, date);
+    const mp = riegel(race, dk, MARATHON) / MARATHON, rp = race / dk;
+    return { mp, rp, race, easy:[mp+40, mp+75], long:[mp+45, mp+80], tempo:[mp-28, mp-15], mpr:[rp-5, rp+5] };
+  }
+  function busyOn(date){
+    const di = dayIdx(date), ds = iso(date);
+    const ex = S.exc.find(x => x.date_from <= ds && x.date_to >= ds);
+    return { off: ex ? (ex.label || t('cal.exception')) : null, blocks: S.rules.filter(r => r.weekday===di).map(r => [toMin(r.start_time), toMin(r.end_time), r.label || t('cal.unavailable')]) };
+  }
+  function findSlot(date, durMin, preferMorning){
+    const b = busyOn(date); if(b.off) return null;
+    const weekend = dayIdx(date) >= 5;
+    const cands = preferMorning || weekend ? [420, 390, 450, 480, 360, 330, 1020, 1050, 1080] : [1080, 1050, 1110, 360, 330, 390, 1020, 1140, 420, 990];
+    for(const s of cands){
+      const e = s + durMin;
+      if(e > 1290) continue;
+      if(b.blocks.every(([a,z]) => e <= a || s >= z)) return s;
+    }
+    return null;
+  }
+  function generatePlan(goal){
+    const t0 = today0(), race = parse(goal.race_date), raceMon = monday(race);
+    const D = goalDist(goal), isMar = D.km === MARATHON;
+    // Plán začína hneď od tohto týždňa. Ak sú preteky ďaleko, úvodné týždne sú udržiavací základ
+    // a samotná príprava (najviac D.maxWeeks týždňov) beží až pred pretekmi.
+    let startMon = monday(t0);
+    const yearCap = addDays(raceMon, -51*7);
+    if(startMon < yearCap) startMon = yearCap;
+    const coreStart = addDays(raceMon, -(D.maxWeeks-1)*7);
+    const N = Math.round(daysBetween(startMon, raceMon)/7) + 1;
+    const extra = Math.max(0, Math.round(daysBetween(startMon, coreStart)/7));
+    const NC = N - extra;
+    const taper = Math.min(D.taper ?? (NC >= 12 ? 3 : 2), NC), peak = Math.min(D.peak ?? (NC >= 10 ? 2 : 1), Math.max(NC - taper, 0));
+    const rest = Math.max(NC - taper - peak, 0), base = Math.ceil(rest*0.4), build = rest - base;
+    const phaseOf = i => { const j = i - extra; return j < base ? 'base' : j < base+build ? 'build' : j < base+build+peak ? 'peak' : 'taper'; };
+    const ZR = paceZones(goal, race);
+    const peakLong = ZR.mp <= 360 ? D.peakLong[0] : D.peakLong[1];
+    // dlhý beh nadviaže na to, čo bežec reálne zvládol za posledné 3 týždne
+    const recentLong = Math.max(0, ...S.runs.filter(r => r.run_date >= iso(addDays(t0,-21))).map(r => Number(r.distance_km)));
+    const startLong = Math.min(Math.max(D.startLong, Math.round(recentLong*0.9)), peakLong - 2);
+
+    const lastBuild = NC - taper - 1;
+    const trainDays = (goal.train_days||[]).slice().sort((a,b)=>a-b);
+    const longDay = trainDays.includes(goal.long_run_day) ? goal.long_run_day : trainDays[trainDays.length-1];
+    const others = trainDays.filter(d => d !== longDay);
+    const circ = (a,b) => { const d = Math.abs(a-b); return Math.min(d, 7-d); };
+    const qualityDay = others.length ? others.slice().sort((a,b)=> circ(b,longDay)-circ(a,longDay))[0] : null;
+    // Zvolené dni sú dostupnosť, nie povinnosť: oddych má prednosť, behov je len toľko, koľko fáza potrebuje
+    const maxRuns = ph => ph==='base' || ph==='taper' ? 3 : (D.km <= 5 ? 3 : 4);
+    function pickDays(n){
+      const chosen = [longDay], res = [];
+      if(qualityDay != null && n > 1){ res.push(qualityDay); chosen.push(qualityDay); }
+      while(res.length < n - 1){
+        const cand = others.filter(d => !chosen.includes(d));
+        if(!cand.length) break;
+        const score = d => Math.min(...chosen.map(c => circ(c, d)))*10 - (d === (longDay+6)%7 ? 5 : 0);
+        cand.sort((a,b)=> score(b)-score(a) || a-b);
+        res.push(cand[0]); chosen.push(cand[0]);
+      }
+      return res.sort((a,b)=>a-b);
+    }
+    const out = [], used = new Set(), dropped = [];
+    const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+    const mid = r => (r[0]+r[1])/2;
+    const raceIso = iso(race);
+    const P = r => ({ pace_min_sec: Math.round(r[0]), pace_max_sec: Math.round(r[1]) });
+
+    function place(w, date){
+      const wkStart = monday(date), wkEnd = addDays(wkStart, 6);
+      const dur = Math.round(w.distance_km * mid([w.pace_min_sec, w.pace_max_sec]) / 60) + 10;
+      for(const off of [0, 1, -1, 2, -2]){
+        const d = addDays(date, off), ds = iso(d);
+        if(d < t0 || d < wkStart || d > wkEnd || ds >= raceIso || used.has(ds)) continue;
+        const s = findSlot(d, dur, w.kind==='long');
+        if(s == null) continue;
+        used.add(ds); out.push({ ...w, workout_date: ds, start_time: hmFull(s) });
+        return;
+      }
+      dropped.push(iso(date));
+    }
+
+    for(let i = 0; i < N; i++){
+      const wkMon = addDays(startMon, i*7), phase = phaseOf(i), wk = i+1;
+      const Z = paceZones(goal, addDays(wkMon, 3)), t5pace = riegel(Z.mp*MARATHON, MARATHON, 5) / 5;
+      let longKm;
+      if(phase==='taper'){
+        const fromEnd = N - 1 - i;
+        longKm = fromEnd===0 ? 0 : (fromEnd===1 ? Math.round(peakLong*(D.km >= 21 ? 0.5 : 0.65)) : Math.round(peakLong*0.7));
+      } else if(i < extra){
+        // udržiavací základ: dlhý beh sa nezvyšuje, každý 4. týždeň je ľahší
+        longKm = Math.round(startLong * (i % 4 === 3 ? 0.8 : 1));
+      } else {
+        const j = i - extra;
+        const p = lastBuild > 0 ? j / lastBuild : 1;
+        longKm = Math.round(startLong + (peakLong - startLong) * Math.min(p,1));
+        if(j % 4 === 3 && phase !== 'peak') longKm = Math.round(longKm * 0.75);
+      }
+      const week = [];
+      if(i === N-1){
+        const ri = dayIdx(race);
+        week.push({ day: ri, w:{ kind:'race', distance_km: D.km, ...P(Z.mpr) } });
+        others.concat([longDay]).filter(d => d < ri - 1).slice(-2).forEach(d => week.push({ day:d, w:{ kind:'easy', distance_km: d === ri-2 ? (D.km >= 21 ? 4 : 3) : (D.km >= 21 ? 6 : 4), ...P(Z.easy) } }));
+      } else {
+        week.push({ day: longDay, w:{ kind:'long', distance_km: longKm, ...P(Z.long) } });
+        const easyKm = clamp(Math.round(longKm*0.4), D.minEasy, 10);
+        pickDays(Math.min(maxRuns(phase), trainDays.length)).forEach(d => {
+          if(d === qualityDay && (phase === 'base' || phase === 'build') && i >= 2 && i % 4 === 2){
+            week.push({ day:d, w:{ kind:'test', distance_km: 5, pace_min_sec: Math.round(t5pace-5), pace_max_sec: Math.round(t5pace+5) } });
+          } else if(d === qualityDay && phase === 'build'){
+            week.push({ day:d, w:{ kind:'tempo', distance_km: clamp(Math.round(longKm*0.5), Math.max(6, D.minEasy+2), 13), ...P(Z.tempo) } });
+          } else if(d === qualityDay && (phase === 'peak' || phase === 'taper')){
+            week.push({ day:d, w:{ kind:'mp', distance_km: phase === 'peak' ? clamp(Math.round(longKm*0.45), D.minQ, 14) : (D.km >= 21 ? 8 : D.minQ), ...P(Z.mpr) } });
+          } else {
+            week.push({ day:d, w:{ kind:'easy', distance_km: phase==='taper' ? Math.min(easyKm, 6) : easyKm, ...P(Z.easy) } });
+          }
+        });
+      }
+      const prio = { race:0, long:1, tempo:2, mp:2, test:2, easy:3 };
+      week.sort((a,b)=> prio[a.w.kind]-prio[b.w.kind]);
+      for(const p of week){
+        const date = addDays(wkMon, p.day);
+        const w = { ...p.w, phase, week_no: wk };
+        // titulok a popis sa ukladajú v aktuálnom jazyku, zobrazujú sa však vždy podľa druhu tréningu
+        const tmp = { ...w }; const keepMax = S.maxWeek; S.maxWeek = N;
+        w.title = (w.kind==='race' ? t('race.'+distKey(D.km)) : w.kind==='mp' ? (isMar ? t('w.mp') : t('w.rp')) : w.kind==='long' ? t('w.long') : w.kind==='tempo' ? t('w.tempo') : w.kind==='test' ? t('w.test') : (i===N-1 ? t('w.shake') : t('w.easy'))).slice(0,60);
+        w.detail = (w.kind==='tempo' || w.kind==='mp' ? wSegments(tmp).join(' | ') : wTip(tmp)).slice(0,160);
+        S.maxWeek = keepMax;
+        if(w.kind === 'race'){ if(date >= t0){ used.add(iso(date)); out.push({ ...w, workout_date: iso(date), start_time: null }); } continue; }
+        if(date < t0) continue;
+        place(w, date);
+      }
+    }
+    return { rows: out, dropped, weeks: N };
+  }
+
+  async function savePlan(){
+    if(!S.goal) return 0;
+    const { rows, dropped } = generatePlan(S.goal);
+    const del = await sb.from('planned_workouts').delete().eq('user_id', S.me.id).gte('workout_date', iso(today0()));
+    if(del.error) throw del.error;
+    if(rows.length){
+      const ins = await sb.from('planned_workouts').insert(rows.map(r => ({ ...r, user_id: S.me.id })));
+      if(ins.error) throw ins.error;
+    }
+    await loadPlanned();
+    return dropped.length;
+  }
+  async function replan(btn){
+    btn.disabled = true; btn.textContent = t('replan.busy');
+    try{
+      const dropped = await savePlan();
+      $('pReplanBanner').hidden = true; $('cReplanBanner').hidden = true;
+      if(dropped){ $('pReplanBanner').hidden = false; $('pReplanText').textContent = t('replan.dropped',{n:dropped}); $('pReplanBtn').hidden = true; }
+      renderPlanTab();
+    }catch(e){ toast(errText(e, 'replan.fail')); }
+    btn.disabled = false; btn.textContent = t('replan.btn');
+  }
+  $('pReplanBtn').addEventListener('click', e => replan(e.currentTarget));
+  $('cReplanBtn').addEventListener('click', e => replan(e.currentTarget));
+  function markDirty(){ if(!S.goal) return; $('pReplanBanner').hidden = false; $('pReplanBtn').hidden = false; $('pReplanText').textContent = t('replan.dirty'); $('cReplanBanner').hidden = false; }
+
+  // ================= cieľ =================
+  let goalKind = 'finish', goalDays = new Set([1,3,5,6]), goalDistKey = '42', GW = null;
+  const W10 = makeTimeField($('g10kW'), [
+    { key:'m', items: [{ v:null, label:'–' }].concat(nums(25, 119)), unit:'min', label:t('u.min') },
+    { key:'s', items: nums(0, 59, true), unit:'s', label:t('u.sec') }
+  ], { title: () => t('goal.recent'), emptyIf: v => v.m == null, emptyText: () => t('goal.notSet') });
+  function setDist(k){
+    goalDistKey = k; const D = DISTS[k], hmm = D.clock === 'hmm';
+    document.querySelectorAll('#gDist .pill').forEach(b => b.setAttribute('aria-pressed', b.dataset.dist===k ? 'true':'false'));
+    $('gSlow').textContent = t('goal.under',{x:D.under[0]}); $('gFast').textContent = t('goal.under',{x:D.under[1]});
+    if(!GW || GW.key !== k){
+      const lo = D.limits[0], hi = D.limits[1];
+      const spec = hmm
+        ? [ { key:'a', items: nums(Math.floor(lo/3600), Math.floor(hi/3600)), unit:'h', label:t('u.hours') }, { key:'b', items: nums(0, 59, true), unit:'min', label:t('u.min') } ]
+        : [ { key:'a', items: nums(Math.floor(lo/60), Math.floor(hi/60)), unit:'min', label:t('u.min') }, { key:'b', items: nums(0, 59, true), unit:'s', label:t('u.sec') } ];
+      GW = makeTimeField($('gCustomW'), spec, { title: () => t('goal.target') }); GW.key = k;
+      const def = { '5':[27,0], '10':[55,0], '21':[1,55], '42':[3,59] }[k];
+      GW.a.set(def[0]); GW.b.set(def[1]);
+    }
+  }
+  document.querySelectorAll('#gDist .pill').forEach(b => b.addEventListener('click', ()=> setDist(b.dataset.dist)));
+  function buildDayPills(box, set, onChange){
+    box.textContent = '';
+    days().forEach((l,i) => {
+      const b = el('button','pill', l); b.type='button'; b.setAttribute('aria-pressed', set.has(i)?'true':'false'); b.setAttribute('aria-label', daysLong()[i]);
+      b.addEventListener('click', ()=>{ set.has(i) ? set.delete(i) : set.add(i); b.setAttribute('aria-pressed', set.has(i)?'true':'false'); onChange && onChange(); });
+      box.appendChild(b);
+    });
+  }
+  function refreshLongSelect(){
+    const sel = $('gLong'), cur = Number(sel.value);
+    sel.textContent = '';
+    [...goalDays].sort((a,b)=>a-b).forEach(d => { const o = el('option', null, daysLong()[d]); o.value = d; sel.appendChild(o); });
+    if(goalDays.has(cur)) sel.value = cur; else if(goalDays.has(6)) sel.value = 6; else if(sel.options.length) sel.value = sel.options[sel.options.length-1].value;
+    $('gDaysLbl').textContent = t('goal.days',{n:goalDays.size});
+  }
+  function setKind(k){
+    goalKind = k;
+    document.querySelectorAll('#gKind .pill').forEach(b => b.setAttribute('aria-pressed', b.dataset.kind===k ? 'true':'false'));
+    $('gCustomWrap').hidden = k !== 'custom';
+  }
+  document.querySelectorAll('#gKind .pill').forEach(b => b.addEventListener('click', ()=> setKind(b.dataset.kind)));
+  $('gDate').addEventListener('input', updateLeft);
+  function updateLeft(){
+    const v = $('gDate').value; if(!v){ $('gLeft').textContent=''; return; }
+    const d = daysBetween(today0(), parse(v));
+    $('gLeft').textContent = d < 0 ? t('goal.past') : t('goal.left',{w:Math.floor(d/7), r:d%7});
+  }
+  function openGoalForm(keepValues){
+    const g = S.goal;
+    if(!keepValues){
+      $('gDate').value = g ? g.race_date : '';
+      setKind(!g ? 'finish' : g.goal_kind === 'sub430' ? 'slow' : g.goal_kind === 'sub400' ? 'fast' : g.goal_kind);
+      const D0 = goalDist(g); goalDistKey = distKey(g && g.race_distance_km);
+      const ct = g && g.goal_kind === 'custom' && g.goal_time_sec ? g.goal_time_sec : null;
+      W10.m.set(g && g.recent_10k_sec ? Math.min(119, Math.floor(g.recent_10k_sec/60)) : null);
+      W10.s.set(g && g.recent_10k_sec ? g.recent_10k_sec%60 : 0);
+      goalDays = new Set(g ? g.train_days : [1,3,5,6]);
+    }
+    setDist(goalDistKey);
+    if(!keepValues && g && g.goal_kind === 'custom' && g.goal_time_sec){
+      const D1 = DISTS[goalDistKey], ct = g.goal_time_sec;
+      if(D1.clock === 'hmm'){ GW.a.set(Math.floor(ct/3600)); GW.b.set(Math.floor(ct%3600/60)); } else { GW.a.set(Math.floor(ct/60)); GW.b.set(ct%60); }
+    }
+    buildDayPills($('gDays'), goalDays, refreshLongSelect);
+    refreshLongSelect(); if(g && !keepValues) $('gLong').value = g.long_run_day;
+    updateLeft();
+    $('goalBtn').textContent = t(g ? 'goal.saveRe' : 'goal.create');
+    $('goalCancel').hidden = !g;
+    if(!keepValues) $('goalMsg').textContent='';
+  }
+  $('pEditGoal').addEventListener('click', ()=>{ S.editingGoal = true; goalFormOpen = false; renderPlanTab(); window.scrollTo(0,0); });
+  $('goalCancel').addEventListener('click', ()=>{ S.editingGoal = false; renderPlanTab(); });
+  $('goalForm').addEventListener('submit', async ev=>{
+    ev.preventDefault(); const msg = $('goalMsg'); msg.textContent='';
+    const D = DISTS[goalDistKey], date = $('gDate').value;
+    if(!date){ msg.textContent=t('goal.needDate'); return; }
+    if(daysBetween(today0(), parse(date)) < D.lead){ msg.textContent=t('goal.lead',{n:D.lead}); return; }
+    if(goalDays.size < 2){ msg.textContent=t('goal.needDays'); return; }
+    let goalTime = null;
+    if(goalKind==='custom'){
+      const A = GW.a.get(), B = GW.b.get();
+      const sec = D.clock === 'hmm' ? A*3600 + B*60 : A*60 + B;
+      if(sec < D.limits[0] || sec > D.limits[1]){ msg.textContent = t('goal.badCustom'); return; }
+      goalTime = sec;
+    } else if(goalKind==='slow' || goalKind==='fast'){
+      goalTime = D.presets[goalKind==='slow' ? 0 : 1] - (D.km >= 21 ? 60 : 15);
+    }
+    let tenK = null;
+    if(W10.m.get() != null) tenK = W10.m.get()*60 + W10.s.get();
+    const old = S.goal;
+    const fitnessAt = (!old || tenK !== (old.recent_10k_sec || null) || !old.fitness_at) ? iso(today0()) : old.fitness_at;
+    const row = { fitness_at: fitnessAt, user_id:S.me.id, race_date:date, race_distance_km:D.km, goal_kind:goalKind, goal_time_sec:goalTime, recent_10k_sec:tenK,
+                  train_days:[...goalDays].sort((a,b)=>a-b), long_run_day:Number($('gLong').value), updated_at:new Date().toISOString() };
+    const btn = $('goalBtn'); btn.disabled = true; btn.textContent = t('goal.building');
+    try{
+      const { error } = await sb.from('training_goals').upsert(row, { onConflict:'user_id' });
+      if(error) throw error;
+      S.goal = row; S.planError = null;
+      await savePlan();
+      S.editingGoal = false; S.weekOffset = 0; goalFormOpen = false; renderPlanTab(); window.scrollTo(0,0);
+    }catch(e){ msg.textContent = errText(e, 'goal.saveFail'); }
+    btn.disabled = false; btn.textContent = t(S.goal ? 'goal.saveRe' : 'goal.create');
+  });
+
+  // ================= POPISY TRÉNINGOV A METÓDA =================
+  const INFO = {
+    sk: {
+      easy: { what:'Pokojný beh v konverzačnom tempe. Tvorí väčšinu celej prípravy.',
+        why:'Buduje aeróbny základ, posilňuje srdce, šľachy a kĺby a zároveň dáva telu čas zotaviť sa po náročných tréningoch.',
+        how:['Začni 3 až 5 minútami chôdze alebo veľmi pomalého klusu.','Bež v tempe {pace} /km. Ak ti nesedí, riaď sa pocitom, nie hodinkami.','V základnej fáze pridaj na konci 4 zrýchlenia po 20 sekúnd s úplným oddychom medzi nimi.'],
+        points:['Test reči: musíš zvládnuť hovoriť celými vetami.','Námaha 3 až 4 z 10.','Radšej pomalšie ako rýchlejšie, pomalý beh nie je strata času.','V horúčave spomaľ o 10 až 20 sekúnd na kilometer.'] },
+      long: { what:'Najdlhší beh týždňa v pokojnom, rovnomernom tempe.',
+        why:'Zvyšuje vytrvalosť, učí telo šetriť energiu a hlavu zvládať dlhý čas na nohách. Je to aj skúška pitia a jedla počas behu.',
+        how:['Prvé kilometre bež najpomalšie, potom drž rovnomerné tempo {pace} /km.','Pri behoch nad 75 minút pi pravidelne a skúšaj gély alebo iné jedlo ako v deň pretekov.','Po behu sa do hodiny najedz: sacharidy a bielkoviny.'],
+        points:['Na Malte vybiehaj skoro ráno, vezmi vodu a pri dlhých behoch aj soľ.','Zmeškané kilometre nedobiehaj v ďalších dňoch.','Ak ťa niečo bolí ostro alebo sa bolesť zhoršuje, beh ukonči.','Námaha 4 až 5 z 10, stále by si mal vedieť rozprávať.'] },
+      tempo: { what:'Súvislý úsek v tempe „komfortne ťažko“, blízko tvojho prahového tempa.',
+        why:'Zvyšuje rýchlosť, ktorú vydržíš dlhý čas, bez toho, aby si sa vyčerpal ako na pretekoch.',
+        how:['2 km rozklus a 3 až 4 krátke zrýchlenia.','{x} km v tempe {pace} /km.','2 km vyklus a pár minút chôdze.'],
+        points:['Námaha 6 až 7 z 10, zvládneš povedať len pár slov.','Bež rovnomerne, nie čo najrýchlejšie. Posledný kilometer má byť rovnako rýchly ako prvý.','Pri vetre na pobreží alebo v kopci sa riaď námahou, nie tempom.','Ak tempo nedržíš, radšej skráť úsek, ako by si išiel nad svoje sily.'] },
+      mp: { what:'Úsek v plánovanom tempe pretekov.',
+        why:'Telo aj hlava si zvyknú na tempo, ktoré budeš držať v deň pretekov. Je to aj generálka oblečenia, topánok a jedla.',
+        how:['2 km rozklus.','{x} km v tempe {pace} /km.','2 km vyklus.'],
+        points:['Tempo by malo pôsobiť zvládnuteľne. Ak je výrazne ťažké, cieľ je možno príliš ambiciózny, uprav ho v Pláne.','Vyskúšaj rovnaké raňajky, gély a oblečenie ako v deň pretekov.','Pri maratóne námaha okolo 5 až 6 z 10, pri kratších tratiach viac.'] },
+      shake: { what:'Krátky a ľahký beh v týždni pretekov.',
+        why:'Udrží nohy svieže a pomôže zbaviť sa nervozity, bez toho, aby ťa unavil.',
+        how:['{km} km veľmi ľahko.','Ak chceš, pridaj na konci 3 až 4 krátke zrýchlenia.'],
+        points:['Nič nedobiehaj, forma je už natrénovaná.','Viac spánku a priebežné pitie.','Žiadne nové topánky, oblečenie ani jedlo.'] },
+      test: { what:'Kontrolný beh: 5 km čo najrýchlejšie, ale rovnomerne.',
+        why:'Ukáže tvoju aktuálnu formu. Podľa výsledku appka prepočíta tempá na celý zvyšok plánu.',
+        how:['2 km rozklus a 3 až 4 krátke zrýchlenia.','5 km v tempe, ktoré udržíš do konca, približne {pace} /km.','2 km vyklus.','Do appky zapíš len samotných 5 km a ich čas.'],
+        points:['Vyber si rovinatú trasu bez semaforov, napríklad promenádu.','Začni rozumne, druhú polovicu môžeš zrýchliť.','Námaha 8 až 9 z 10.','Ak sa necítiš dobre, test presuň, nevynucuj ho.'] },
+      race: { what:'Deň pretekov. Na toto si sa pripravoval.',
+        why:'Celá príprava smeruje sem. Teraz ide hlavne o rozumné rozloženie síl.',
+        how:['Raňajkuj 2 až 3 hodiny pred štartom, len overené jedlo.','Rozklus: pri 5 a 10 km 10 až 15 minút s pár zrýchleniami, pri polmaratóne a maratóne stačí chôdza a pár minút klusu.','Prvé kilometre bež o 5 až 10 sekúnd pomalšie ako cieľové tempo {pace} /km.'],
+        points:['Nič nové v deň pretekov.','Pi na občerstvovačkách od začiatku, nie až keď máš smäd.','Prvú polovicu drž na uzde, zrýchliť môžeš v závere.','Po cieli jedlo, pitie a oddych. Na ďalší tréning príde čas.'] }
+    },
+    en: {
+      easy: { what:'A relaxed run at conversational pace. It makes up most of your training.',
+        why:'It builds your aerobic base, strengthens your heart, tendons and joints, and gives your body time to recover from hard sessions.',
+        how:['Start with 3 to 5 minutes of walking or very slow jogging.','Run at {pace} /km. If that doesn’t feel right, go by feel, not by your watch.','In the base phase, finish with 4 strides of 20 seconds with full rest in between.'],
+        points:['Talk test: you should be able to speak in full sentences.','Effort 3 to 4 out of 10.','Slower is better than faster; easy running is not wasted time.','In the heat, slow down by 10 to 20 seconds per kilometre.'] },
+      long: { what:'The longest run of the week at a calm, steady pace.',
+        why:'It builds endurance, teaches your body to save energy and your mind to handle long hours on your feet. It’s also a test of drinking and eating on the run.',
+        how:['Run the first kilometres slowest, then hold a steady {pace} /km.','On runs over 75 minutes, drink regularly and try gels or other food as on race day.','Eat within an hour afterwards: carbohydrates and protein.'],
+        points:['In Malta, head out early, bring water and, on long runs, some salt.','Don’t make up missed kilometres on other days.','If something hurts sharply or the pain gets worse, stop.','Effort 4 to 5 out of 10, you should still be able to talk.'] },
+      tempo: { what:'A continuous “comfortably hard” section close to your threshold pace.',
+        why:'It raises the speed you can hold for a long time, without draining you like a race.',
+        how:['2 km warm-up and 3 to 4 short strides.','{x} km at {pace} /km.','2 km cool-down and a few minutes of walking.'],
+        points:['Effort 6 to 7 out of 10, you can only say a few words.','Run evenly, not as fast as possible. The last kilometre should match the first.','In coastal wind or on hills, go by effort, not pace.','If you can’t hold the pace, shorten the section rather than overreach.'] },
+      mp: { what:'A section at your planned race pace.',
+        why:'Your body and mind get used to the pace you’ll hold on race day. It’s also a dress rehearsal for clothes, shoes and food.',
+        how:['2 km warm-up.','{x} km at {pace} /km.','2 km cool-down.'],
+        points:['The pace should feel manageable. If it’s much harder, your goal may be too ambitious; adjust it in Plan.','Try the same breakfast, gels and clothes as on race day.','Effort around 5 to 6 out of 10 for a marathon, more for shorter races.'] },
+      shake: { what:'A short, easy run in race week.',
+        why:'It keeps your legs fresh and helps with nerves without tiring you.',
+        how:['{km} km very easy.','If you like, finish with 3 to 4 short strides.'],
+        points:['Don’t try to catch up; your fitness is already built.','More sleep and steady drinking.','No new shoes, clothes or food.'] },
+      test: { what:'Time trial: 5 km as fast as you can while staying even.',
+        why:'It shows your current fitness. The app recalculates the paces for the rest of your plan from the result.',
+        how:['2 km warm-up and 3 to 4 short strides.','5 km at a pace you can hold to the end, around {pace} /km.','2 km cool-down.','Log only the 5 km itself and its time in the app.'],
+        points:['Pick a flat route without traffic lights, such as the promenade.','Start sensibly; you can speed up in the second half.','Effort 8 to 9 out of 10.','If you don’t feel well, move the test; don’t force it.'] },
+      race: { what:'Race day. This is what you trained for.',
+        why:'Everything leads here. Now it’s mostly about pacing yourself well.',
+        how:['Have breakfast 2 to 3 hours before the start, only food you know.','Warm-up: for 5 and 10 km, 10 to 15 minutes with a few strides; for a half or full marathon, a walk and a few minutes of jogging is enough.','Run the first kilometres 5 to 10 seconds slower than your target {pace} /km.'],
+        points:['Nothing new on race day.','Drink at the aid stations from the start, not only when you’re thirsty.','Hold back in the first half; you can speed up at the end.','After the finish: food, drink and rest. The next workout can wait.'] }
+    }
+  };
+  const METHOD = {
+    sk: [
+      ['Väčšina behov je pomalá','Zhruba 80 % času beháš ľahko a náročný tréning máš najviac raz do týždňa. Tak sa zlepšuješ a zároveň sa nezraníš.'],
+      ['Postupné zvyšovanie','Dlhý beh rastie po malých krokoch. Každý štvrtý týždeň je ľahší, aby telo stihlo záťaž vstrebať.'],
+      ['Štyri fázy','Základ: ľahké behy a aeróbny základ. Budovanie: pribudne tempový beh. Vrchol: najdlhšie behy a tempo pretekov. Ladenie: objem klesá, nohy sa zotavia a forma vrcholí.'],
+      ['Oddych je tréning','Zlepšuješ sa počas oddychu, nie počas behu. Dni voľna sú plnohodnotná súčasť plánu, preto plán nevyužije všetky dni, ktoré si označil.'],
+      ['Ako merať námahu','Škála 1 až 10 a test reči. Ľahký beh 3 až 4 (celé vety), dlhý beh 4 až 5, tempo 6 až 7 (pár slov), preteky 8 až 9.'],
+      ['Počúvaj telo','Únava a ťažké nohy sú normálne. Ostrá bolesť, opuch alebo bolesť, ktorá sa počas behu zhoršuje, nie sú. Vtedy prestaň a poraď sa s odborníkom.'],
+      ['Malta a teplo','Behaj skoro ráno alebo večer, pi pred behom aj po ňom, v teple spomaľ a nezabudni na čiapku a opaľovací krém.'],
+      ['Tempá rastú k cieľu','Ak máš cieľový čas, tempá začínajú pri tvojej aktuálnej forme a postupne sa zrýchľujú tak, aby na konci prípravy zodpovedali cieľu.'],
+      ['Plán sa prispôsobuje','Podľa náročných tréningov a pocitu po behoch appka mierne upraví tempá. Každé štyri týždne ťa čaká kontrolný beh na 5 km: ukáže, či forma stúpa, klesá alebo stagnuje, a krivku temp k cieľu znovu nastaví.'],
+      ['Keď niečo vynecháš','Nedobiehaj, pokračuj ďalej podľa plánu. Ak vynecháš viac ako týždeň, uprav cieľ a prepočítaj plán.']
+    ],
+    en: [
+      ['Most runs are easy','Roughly 80 % of your running is easy, with at most one hard session a week. That’s how you improve without getting injured.'],
+      ['Gradual progression','Your long run grows in small steps. Every fourth week is lighter so your body can absorb the load.'],
+      ['Four phases','Base: easy running and aerobic foundation. Build: a tempo run is added. Peak: longest runs and race pace. Taper: volume drops, legs recover and form peaks.'],
+      ['Rest is training','You improve while resting, not while running. Rest days are a full part of the plan, which is why it won’t use every day you marked.'],
+      ['Measuring effort','Use a 1 to 10 scale and the talk test. Easy run 3 to 4 (full sentences), long run 4 to 5, tempo 6 to 7 (a few words), race 8 to 9.'],
+      ['Listen to your body','Fatigue and heavy legs are normal. Sharp pain, swelling or pain that gets worse during a run are not. Stop and see a professional.'],
+      ['Malta and the heat','Run early in the morning or in the evening, drink before and after, slow down in the heat and wear a cap and sunscreen.'],
+      ['Paces build towards your goal','If you set a target time, paces start at your current form and get gradually faster so that by the end of the build they match your goal.'],
+      ['Your plan adapts','Based on your hard sessions and how runs feel, the app gently adjusts your paces. Every four weeks a 5 km time trial shows whether your form is rising, dropping or flat, and resets the pace curve towards your goal.'],
+      ['If you miss a session','Don’t make it up, just carry on with the plan. If you miss more than a week, adjust your goal and recalculate the plan.']
+    ]
+  };
+
+  function infoKind(p){
+    if(p.kind==='easy') return p.week_no === S.maxWeek ? 'shake' : 'easy';
+    return p.kind;
+  }
+  function paceRange(p){ return fmtPace(p.pace_min_sec)+' – '+fmtPace(p.pace_max_sec); }
+  function fillTpl(str, p){
+    return str.replace('{pace}', paceRange(p)).replace('{x}', fmtKm(Math.max(Number(p.distance_km)-4,1))).replace('{km}', fmtKm(p.distance_km));
+  }
+  const sheet = $('sheet');
+  sheet.addEventListener('click', e => { if(e.target === sheet) sheet.close(); });
+  function openSheet(build){
+    const b = $('sheetBody'); b.textContent = ''; build(b);
+    if(typeof sheet.showModal === 'function'){ if(!sheet.open) sheet.showModal(); } else sheet.setAttribute('open','');
+    b.scrollTop = 0; sheet.scrollTop = 0;
+  }
+  function closeSheet(){ if(typeof sheet.close === 'function') sheet.close(); else sheet.removeAttribute('open'); }
+  function section(b, title, content){
+    const w = el('div'); w.appendChild(el('h3', null, title));
+    if(Array.isArray(content)){ const ul = el('ul'); content.forEach(c => ul.appendChild(el('li', null, c))); w.appendChild(ul); }
+    else w.appendChild(el('p', null, content));
+    b.appendChild(w);
+  }
+  function openWorkout(p){
+    const k = infoKind(p), I = INFO[LANG][k] || INFO.sk[k], d = parse(p.workout_date), tIso = iso(today0());
+    openSheet(b => {
+      const top = el('div','between');
+      const h = el('h2', null, wTitle(p)); h.id = 'sheetTitle';
+      top.append(h, el('span','val', fmtKm(p.distance_km)+' km'));
+      top.lastChild.style.cssText = 'font-family:var(--display);font-size:28px;font-weight:700';
+      b.appendChild(top);
+      b.appendChild(el('p','hint', daysLong()[dayIdx(d)]+' '+fmtShort(d)+(p.start_time ? ', '+hm(toMin(p.start_time)) : '')));
+      const tags = el('div','tags');
+      tags.append(el('span','tag', paceRange(p)+' /km'), el('span','tag', t('d.phase',{p:t('phase.'+p.phase)})), el('span','tag', t('d.week',{a:p.week_no, b:S.maxWeek})));
+      b.appendChild(tags);
+      section(b, t('d.what'), I.what);
+      section(b, t('d.why'), I.why);
+      const how = el('div'); how.appendChild(el('h3', null, t('d.how')));
+      const ol = el('ol'); I.how.forEach(c => ol.appendChild(el('li', null, fillTpl(c, p)))); how.appendChild(ol); b.appendChild(how);
+      section(b, t('d.points'), I.points);
+      const btns = el('div','sheet-btns');
+      if(p.workout_date <= tIso){
+        const log = el('button','primary', t('plan.log')); log.type='button';
+        log.addEventListener('click', ()=>{ closeSheet(); $('date').value = p.workout_date; $('km').value = LANG==='sk' ? String(p.distance_km).replace('.',',') : String(p.distance_km); presetFromPlan(p); showTab('runs'); });
+        btns.appendChild(log);
+      }
+      const cal = el('button','ghost', t('d.addCal')); cal.type='button'; cal.addEventListener('click', ()=> exportICS([p]));
+      const cls = el('button','ghost', t('d.close')); cls.type='button'; cls.addEventListener('click', closeSheet);
+      btns.append(cal, cls);
+      b.appendChild(btns);
+      const m = el('button','link', t('d.methodLink')); m.type='button'; m.addEventListener('click', openMethod);
+      b.appendChild(m);
+    });
+  }
+  function openMethod(){
+    openSheet(b => {
+      const h = el('h2', null, t('d.methodTitle')); h.id = 'sheetTitle'; b.appendChild(h);
+      b.appendChild(el('p','hint', t('d.methodIntro')));
+      (METHOD[LANG] || METHOD.sk).forEach(([title, text]) => section(b, title, text));
+      const cls = el('button','ghost', t('d.close')); cls.type='button'; cls.addEventListener('click', closeSheet);
+      b.appendChild(cls);
+    });
+  }
+  $('pMethod').addEventListener('click', openMethod);
+
+  // ---------- export do kalendára (.ics) ----------
+  function icsEsc(x){ return String(x).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n'); }
+  function icsFold(line){ const out = []; let s2 = line; while(s2.length > 74){ out.push(s2.slice(0,74)); s2 = ' ' + s2.slice(74); } out.push(s2); return out.join('\r\n'); }
+  function exportICS(list){
+    if(!list.length){ toast(t('cal.exportNone')); return; }
+    const stamp = new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d+Z$/,'Z');
+    const lines = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//The Maltese Pacer//'+LANG.toUpperCase(),'CALSCALE:GREGORIAN','METHOD:PUBLISH'];
+    list.forEach(p => {
+      const k = infoKind(p), I = INFO[LANG][k] || INFO.sk[k];
+      const ymd = p.workout_date.replace(/-/g,'');
+      const desc = [paceRange(p)+' /km', '', I.what, '', ...I.how.map((c,i)=> (i+1)+'. '+fillTpl(c,p)), '', ...I.points.map(c => '• '+c), '', location.origin+location.pathname].join('\n');
+      lines.push('BEGIN:VEVENT', 'UID:'+(p.id || p.workout_date)+'@maltese-pacer', 'DTSTAMP:'+stamp);
+      if(p.start_time){
+        const s0 = toMin(p.start_time), dur = Math.round(p.distance_km * (p.pace_min_sec+p.pace_max_sec)/2/60) + 15, e0 = Math.min(s0 + dur, 23*60+59);
+        const tt = m => pad(Math.floor(m/60))+pad(m%60)+'00';
+        lines.push('DTSTART:'+ymd+'T'+tt(s0), 'DTEND:'+ymd+'T'+tt(e0));
+      } else {
+        const nx = iso(addDays(parse(p.workout_date),1)).replace(/-/g,'');
+        lines.push('DTSTART;VALUE=DATE:'+ymd, 'DTEND;VALUE=DATE:'+nx);
+      }
+      lines.push(icsFold('SUMMARY:'+icsEsc(wTitle(p)+' '+fmtKm(p.distance_km)+' km')), icsFold('DESCRIPTION:'+icsEsc(desc)), 'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsEsc(wTitle(p)),'TRIGGER:-PT30M','END:VALARM','END:VEVENT');
+    });
+    lines.push('END:VCALENDAR');
+    const blob = new Blob([lines.join('\r\n')+'\r\n'], { type:'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = list.length===1 ? 'trening-'+list[0].workout_date+'.ics' : 'maltese-pacer-plan.ics';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=> URL.revokeObjectURL(url), 60000);
+    toast(t('cal.exportDone'));
+  }
+  $('calExport').addEventListener('click', ()=>{ const td = iso(today0()); exportICS(S.planned.filter(p => p.workout_date >= td)); });
+
+  // ================= plán – zobrazenie =================
+  let goalFormOpen = false;
+  function renderPlanTab(){
+    if(!S.me) return;
+    if(S.planError || !S.goal || S.editingGoal){
+      $('goalView').hidden = false; $('planView').hidden = true;
+      openGoalForm(goalFormOpen); goalFormOpen = true;
+      if(S.planError) $('goalMsg').textContent = errText(S.planError);
+      return;
+    }
+    goalFormOpen = false;
+    renderAdapt(); renderForm();
+    const lastRun = S.runs.length ? S.runs[0].run_date : null, pauseFrom = iso(addDays(today0(), -10));
+    const planStarted = S.planned.some(p => p.workout_date < pauseFrom);
+    if(planStarted && (!lastRun || lastRun < pauseFrom) && $('pReplanBanner').hidden){
+      $('pReplanBanner').hidden = false; $('pReplanBtn').hidden = false; $('pReplanText').textContent = t('adapt.pause');
+    }
+    $('goalView').hidden = true; $('planView').hidden = false;
+    const t0 = today0(), tIso = iso(t0), k = distKey(S.goal.race_distance_km);
+    const left = daysBetween(t0, parse(S.goal.race_date));
+    $('pDaysLeft').textContent = left > 0 ? t('race.in',{k, n:left}) : left === 0 ? t('race.today',{k}) : t('race.past',{k});
+
+    const thisWeekRow = S.planned.find(p => monday(parse(p.workout_date)).getTime() === monday(t0).getTime()) || S.planned.find(p => p.workout_date >= tIso);
+    const curWeek = thisWeekRow ? thisWeekRow.week_no : 0, curPhase = thisWeekRow ? thisWeekRow.phase : null;
+    $('pWeekTitle').textContent = S.maxWeek ? t('plan.week',{a:Math.max(curWeek,1), b:S.maxWeek}) : t('plan.title');
+
+    const counts = {}; PHASES.forEach(x => counts[x] = new Set());
+    S.planned.forEach(p => counts[p.phase] && counts[p.phase].add(p.week_no));
+    const cols = PHASES.map(x => Math.max(counts[x].size, 0.6)+'fr').join(' ');
+    const bar = $('pPhaseBar'), lbl = $('pPhaseLbl'); bar.textContent=''; lbl.textContent='';
+    bar.style.gridTemplateColumns = cols; lbl.style.gridTemplateColumns = cols;
+    PHASES.forEach(x => { bar.appendChild(el('div', x===curPhase?'on':'')); lbl.appendChild(el('span', x===curPhase?'on':'', t('phase.'+x))); });
+
+    const doneDates = new Set(S.runs.map(r => r.run_date));
+    const next = S.planned.find(p => p.workout_date >= tIso && !(p.workout_date===tIso && doneDates.has(tIso)));
+    const box = $('pToday'); box.textContent='';
+    if(next){
+      const d = parse(next.workout_date), isToday = next.workout_date === tIso;
+      const card = el('div','today');
+      const top = el('div','between');
+      const when = t(isToday ? 'plan.today' : daysBetween(t0,d)===1 ? 'plan.tomorrow' : 'plan.next') + ', ' + daysLong()[dayIdx(d)] + (next.start_time ? ' '+hm(toMin(next.start_time)) : '');
+      top.append(el('span','when', when), el('span','km', fmtKm(next.distance_km)+' km'));
+      card.append(top, el('div','big', wTitle(next)));
+      const segs = el('div'); segs.style.cssText='display:flex;flex-direction:column;gap:6px';
+      const paceTxt = fmtPace(next.pace_min_sec)+' – '+fmtPace(next.pace_max_sec)+' /km';
+      if(next.kind==='tempo' || next.kind==='mp'){
+        const Z = paceZones(S.goal, parse(next.workout_date)), e = fmtPace(Z.easy[0])+' – '+fmtPace(Z.easy[1])+' /km', sg = wSegments(next);
+        [[sg[0], e, false],[sg[1], paceTxt, true],[sg[2], e, false]].forEach(([a,b,key]) => { const r = el('div','seg-row'+(key?' key':'')); r.append(el('span',null,a), el('span',null,b)); segs.appendChild(r); });
+      } else {
+        const r = el('div','seg-row key'); r.append(el('span',null,t('plan.pace')), el('span',null,paceTxt)); segs.appendChild(r);
+        const tip = wTip(next); if(tip){ const n = el('div','seg-row'); n.append(el('span',null,tip)); segs.appendChild(n); }
+      }
+      card.appendChild(segs);
+      const howBtn = el('button','link', t('plan.howTo')); howBtn.type='button'; howBtn.style.color='var(--hero-accent)';
+      howBtn.addEventListener('click', ()=> openWorkout(next));
+      card.appendChild(howBtn);
+      const btns = el('div','btns');
+      const log = el('button','primary',t('plan.log')); log.type='button';
+      log.addEventListener('click', ()=>{ $('date').value = next.workout_date <= tIso ? next.workout_date : tIso; $('km').value = LANG==='sk' ? String(next.distance_km).replace('.',',') : String(next.distance_km); presetFromPlan(next); showTab('runs'); });
+      const cal = el('button','alt',t('plan.editTimes')); cal.type='button';
+      cal.addEventListener('click', ()=> $('availWrap').scrollIntoView({ behavior:'smooth', block:'start' }));
+      btns.append(log, cal); card.appendChild(btns);
+      box.appendChild(card);
+    } else if(left >= 0) {
+      box.appendChild(el('p','empty',t('plan.noMore')));
+    }
+
+    // ďalšie tréningy bez ohľadu na hranicu týždňa
+    const up = S.planned.filter(p => p.workout_date >= tIso && p !== next).slice(0, 6);
+    const ul = $('pUpcoming'); ul.textContent = '';
+    $('pUpWrap').hidden = !up.length;
+    up.forEach(p => {
+      const d = parse(p.workout_date);
+      const row = el('button','wday'); row.type='button';
+      row.addEventListener('click', ()=> openWorkout(p));
+      row.appendChild(el('span','d', days()[dayIdx(d)]));
+      const tx = el('div','t');
+      tx.append(el('span',null, wTitle(p)+' '+fmtKm(p.distance_km)+' km'),
+                el('span',null, fmtShort(d)+(p.start_time ? ', '+hm(toMin(p.start_time)) : '')+', '+t('plan.paceRange',{a:fmtPace(p.pace_min_sec), b:fmtPace(p.pace_max_sec)})));
+      row.appendChild(tx);
+      if(p.kind==='long' || p.kind==='race') row.appendChild(el('span','badge b-key', t('badge.key')));
+      row.appendChild(el('span','chev','›'));
+      ul.appendChild(row);
+    });
+
+    const wkMon = addDays(monday(t0), S.weekOffset*7);
+    $('pWeekLabel').textContent = S.weekOffset===0 ? t('week.this') : S.weekOffset===1 ? t('week.next') : S.weekOffset===-1 ? t('week.last') : fmtShort(wkMon)+' – '+fmtShort(addDays(wkMon,6));
+    const list = $('pWeek'); list.textContent='';
+    let sum = 0;
+    for(let i=0;i<7;i++){
+      const d = addDays(wkMon,i), ds = iso(d);
+      const p = S.planned.find(x => x.workout_date === ds);
+      const b = busyOn(d), done = doneDates.has(ds);
+      const row = el(p ? 'button' : 'div','wday'+(ds===tIso?' is-today':'')+(p?'':' quiet'));
+      if(p){ row.type='button'; row.addEventListener('click', ()=> openWorkout(p)); }
+      row.appendChild(el('span','d', days()[i]));
+      const tx = el('div','t');
+      let badge = null;
+      if(p){
+        sum += Number(p.distance_km);
+        tx.append(el('span',null, wTitle(p)+' '+fmtKm(p.distance_km)+' km'), el('span',null, (p.start_time ? hm(toMin(p.start_time))+', ' : '')+t('plan.paceRange',{a:fmtPace(p.pace_min_sec), b:fmtPace(p.pace_max_sec)})));
+        badge = done ? ['badge.done','b-done'] : ds===tIso ? ['badge.today','b-today'] : (p.kind==='long'||p.kind==='race') ? ['badge.key','b-key'] : null;
+      } else if(b.off){
+        tx.append(el('span',null,t('plan.notAvail')), el('span',null, b.off)); badge = ['badge.block','b-block'];
+      } else {
+        tx.append(el('span',null,t('plan.rest')), el('span',null, t(done ? 'plan.extra' : 'plan.recovery'))); if(done) badge = ['badge.run','b-done'];
+      }
+      row.appendChild(tx);
+      if(badge) row.appendChild(el('span','badge '+badge[1], t(badge[0])));
+      if(p) row.appendChild(el('span','chev','›'));
+      list.appendChild(row);
+    }
+    $('pWeekKm').textContent = sum ? t('plan.kmPlanned',{km:fmtKm(sum)}) : '';
+    renderAvail();
+  }
+  $('pPrev').addEventListener('click', ()=>{ S.weekOffset--; renderPlanTab(); });
+  $('pNext').addEventListener('click', ()=>{ S.weekOffset++; renderPlanTab(); });
+
+  // ================= kalendár =================
+  let ruleDays = new Set([0,1,2,3,4]);
+  function renderAvail(){
+    if(!S.me) return;
+    const head = $('calHead'); head.textContent=''; head.appendChild(el('span')); days().forEach(d => head.appendChild(el('span',null,d)));
+    const grid = $('calGrid'); grid.textContent='';
+    const H = 18, START = 5;
+    const hours = el('div','hours');
+    [6,9,12,15,18,21].forEach(h => { const s = el('span',null,String(h)); s.style.top = ((h-START)*H - 6)+'px'; hours.appendChild(s); });
+    grid.appendChild(hours);
+    const wkMon = monday(today0());
+    for(let i=0;i<7;i++){
+      const d = addDays(wkMon,i), ds = iso(d), b = busyOn(d);
+      const col = el('div','col');
+      const blk = (from, to, text, cls, title, onTap) => {
+        const x = el(onTap ? 'button' : 'div','blk '+cls, text); x.title = title || text;
+        if(onTap){ x.type='button'; x.setAttribute('aria-label', title || text); x.addEventListener('click', onTap); }
+        const top = Math.max(from - START*60, 0)*H/60, h = Math.max((Math.min(to, 22*60) - Math.max(from, START*60))*H/60 - 2, 10);
+        x.style.top = top+'px'; x.style.height = h+'px'; col.appendChild(x);
+      };
+      if(b.off) blk(START*60, 22*60, '', 'off', b.off);
+      b.blocks.forEach(([a,z,l]) => blk(a, z, l, 'busy', l+' '+hm(a)+' – '+hm(z)));
+      const p = S.planned.find(x => x.workout_date === ds);
+      if(p && p.start_time){ const s = toMin(p.start_time), dur = Math.round(p.distance_km * (p.pace_min_sec+p.pace_max_sec)/2/60); blk(s, s+dur, t(p.kind==='test'?'cal.test':p.kind==='long'?'cal.long':p.kind==='easy'?'cal.run':p.kind==='race'?'cal.race':'cal.tempo'), 'run', wTitle(p)+' '+hm(s), ()=> openWorkout(p)); }
+      grid.appendChild(col);
+    }
+    const rl = $('ruleList'); rl.textContent='';
+    if(!S.rules.length) rl.appendChild(el('p','empty',t('cal.noRules')));
+    const groupsMap = {};
+    S.rules.forEach(r => { const key = r.start_time+'|'+r.end_time+'|'+(r.label||''); (groupsMap[key] = groupsMap[key] || []).push(r); });
+    Object.values(groupsMap).forEach(rs => {
+      const r0 = rs[0];
+      const it = el('div','item'); const tx = el('div');
+      tx.append(el('span',null, r0.label || t('cal.unavailable')), el('span',null, rs.map(r=>days()[r.weekday]).join(', ')+' '+hm(toMin(r0.start_time))+' – '+hm(toMin(r0.end_time))));
+      const del = el('button','del',t('c.delete')); del.type='button'; del.setAttribute('aria-label', t('c.delete')+' '+(r0.label||''));
+      armButton(del, 'c.delete', 'c.sure', async ()=>{
+        const { error } = await sb.from('availability_rules').delete().in('id', rs.map(r=>r.id));
+        if(error){ $('ruleMsg').textContent=t('cal.delFail'); del.disabled=false; return; }
+        S.rules = S.rules.filter(r => !rs.includes(r)); markDirty(); renderPlanTab();
+      });
+      it.append(tx, del); rl.appendChild(it);
+    });
+    const xl = $('excList'); xl.textContent='';
+    const upcoming = S.exc.filter(x => x.date_to >= iso(today0()));
+    if(!upcoming.length) xl.appendChild(el('p','empty',t('cal.noExc')));
+    upcoming.forEach(x => {
+      const it = el('div','item'); const tx = el('div');
+      const range = x.date_from===x.date_to ? fmtShort(parse(x.date_from)) : fmtShort(parse(x.date_from))+' – '+fmtShort(parse(x.date_to));
+      tx.append(el('span',null, x.label || t('cal.exception')), el('span',null, range+', '+t('cal.noTraining')));
+      const del = el('button','del',t('c.delete')); del.type='button'; del.setAttribute('aria-label', t('c.delete')+' '+(x.label||''));
+      armButton(del, 'c.delete', 'c.sure', async ()=>{
+        const { error } = await sb.from('availability_exceptions').delete().eq('id', x.id);
+        if(error){ $('excMsg').textContent=t('cal.delFail'); del.disabled=false; return; }
+        S.exc = S.exc.filter(e => e !== x); markDirty(); renderPlanTab();
+      });
+      it.append(tx, del); xl.appendChild(it);
+    });
+    if(!$('ruleForm').hidden) buildDayPills($('rDays'), ruleDays);
+  }
+  $('rAdd').addEventListener('click', ()=>{ $('ruleForm').hidden = false; $('rAdd').hidden = true; buildDayPills($('rDays'), ruleDays); });
+  $('rCancel').addEventListener('click', ()=>{ $('ruleForm').hidden = true; $('rAdd').hidden = false; });
+  $('ruleForm').addEventListener('submit', async ev=>{
+    ev.preventDefault(); const msg = $('ruleMsg'); msg.textContent='';
+    const a = $('rFrom').value, z = $('rTo').value;
+    if(!ruleDays.size){ msg.textContent=t('cal.needDay'); return; }
+    if(!a || !z || toMin(z) <= toMin(a)){ msg.textContent=t('cal.timeOrder'); return; }
+    const label = $('rLabel').value.trim() || null;
+    const { data, error } = await sb.from('availability_rules').insert([...ruleDays].map(d => ({ user_id:S.me.id, weekday:d, start_time:a, end_time:z, label }))).select();
+    if(error){ msg.textContent = errText(error, 'cal.saveFail'); return; }
+    S.rules = S.rules.concat(data||[]).sort((x,y)=> x.weekday-y.weekday || x.start_time.localeCompare(y.start_time));
+    $('ruleForm').hidden = true; $('rAdd').hidden = false; $('rLabel').value='';
+    markDirty(); renderPlanTab();
+  });
+  $('eAdd').addEventListener('click', ()=>{ $('excForm').hidden = false; $('eAdd').hidden = true; const td = iso(today0()); if(!$('eFrom').value) $('eFrom').value = td; if(!$('eTo').value) $('eTo').value = td; });
+  $('eCancel').addEventListener('click', ()=>{ $('excForm').hidden = true; $('eAdd').hidden = false; });
+  $('excForm').addEventListener('submit', async ev=>{
+    ev.preventDefault(); const msg = $('excMsg'); msg.textContent='';
+    const a = $('eFrom').value, z = $('eTo').value;
+    if(!a || !z || z < a){ msg.textContent=t('cal.dateOrder'); return; }
+    const { data, error } = await sb.from('availability_exceptions').insert({ user_id:S.me.id, date_from:a, date_to:z, label: $('eLabel').value.trim() || null }).select();
+    if(error){ msg.textContent = errText(error, 'cal.saveFail'); return; }
+    S.exc = S.exc.concat(data||[]).sort((x,y)=> x.date_from.localeCompare(y.date_from));
+    $('excForm').hidden = true; $('eAdd').hidden = false; $('eLabel').value='';
+    markDirty(); renderPlanTab();
+  });
+
+  // ================= skupiny =================
+  let showGroupForms = false;
+  async function loadGroups(){
+    const { data, error } = await sb.from('group_members').select('role, groups(id, name, invite_code)').eq('user_id', S.me.id);
+    if(error){ $('groupMsg').textContent = t('grp.loadFail'); return; }
+    S.groups = (data||[]).filter(r=>r.groups).map(r=>({ ...r.groups, role:r.role })).sort((a,b)=>a.name.localeCompare(b.name, LOCALE[LANG]));
+    if(!S.groups.some(g=>g.id===S.group)) S.group = S.groups.length ? S.groups[0].id : null;
+    renderGroups(); if(S.tab==='group') loadBoard();
+  }
+  function renderGroups(){
+    const box = $('groupChips'); box.textContent='';
+    S.groups.forEach(g=>{
+      const b = el('button','chip', g.name); b.type='button'; b.setAttribute('aria-pressed', g.id===S.group ? 'true':'false');
+      b.addEventListener('click', ()=>{ S.group = g.id; try{localStorage.setItem('mp-group', g.id);}catch(e){} renderGroups(); loadBoard(); });
+      box.appendChild(b);
+    });
+    const add = el('button','chip add', t(showGroupForms ? 'grp.close' : 'grp.addOrCreate')); add.type='button';
+    add.addEventListener('click', ()=>{ showGroupForms = !showGroupForms; renderGroups(); if(showGroupForms) $('joinCode').focus(); });
+    box.appendChild(add);
+    $('groupForms').hidden = !showGroupForms && S.groups.length>0;
+    $('noGroups').hidden = S.groups.length>0;
+    const g = S.groups.find(x=>x.id===S.group);
+    $('boardWrap').hidden = !g;
+    if(g) $('inviteCode').textContent = g.invite_code;
+  }
+  function range(p){
+    const now = today0();
+    if(p==='week'){ const s = monday(now); return [iso(s), iso(addDays(s,6))]; }
+    return [iso(new Date(now.getFullYear(), now.getMonth(), 1)), iso(new Date(now.getFullYear(), now.getMonth()+1, 0))];
+  }
+  async function loadBoard(){
+    const list = $('board'); if(!S.group) return;
+    list.textContent=''; list.appendChild(loaderEl(t('grp.loading'), 'li'));
+    const [from, to] = range(S.period), gid = S.group, mode = S.mode, per = S.period;
+    try{ await groupMembers(gid); }catch(e){}
+    const res = mode==='plan' ? await sb.rpc('group_adherence', { p_group: gid, p_from: from, p_to: to }) : await sb.rpc('group_leaderboard', { p_group: gid, p_from: from, p_to: to });
+    if(gid!==S.group || mode!==S.mode || per!==S.period) return;
+    list.textContent='';
+    if(res.error){ list.appendChild(el('li','empty', errText(res.error, 'grp.boardFail'))); return; }
+    const rows = res.data || [];
+    const maxKm = Math.max(1, ...rows.map(r => Number(r.total_km)));
+    rows.forEach((r,i)=>{
+      const me = r.user_id===S.me.id;
+      const li = el('li', me ? 'me' : '');
+      const rb = el('button','rowbtn'); rb.type='button'; li.appendChild(rb);
+      rb.addEventListener('click', ()=> openMember(r.user_id, r.display_name));
+      rb.appendChild(el('span','pos', String(i+1)));
+      const body = el('div','body'), top = el('div','between');
+      const nmEl = nameWithDot(r.display_name + (me ? ' '+t('grp.me') : ''), memColor(gid, r.user_id)); nmEl.classList.add('name');
+      top.appendChild(nmEl);
+      let val, frac, detail;
+      if(mode==='plan'){
+        val = r.pct==null ? '–' : r.pct+' %'; frac = r.pct==null ? 0 : Number(r.pct)/100;
+        detail = Number(r.planned) ? t('grp.planDetail',{done:Number(r.done), planned:Number(r.planned), km:fmtKm(r.total_km)}) : t('grp.noPlan',{km:fmtKm(r.total_km)});
+      } else {
+        val = fmtKm(r.total_km)+' km'; frac = Number(r.total_km)/maxKm;
+        const parts = [t('grp.runs',{n:Number(r.runs_count)})];
+        if(Number(r.longest_km)>0) parts.push(t('grp.longest',{km:fmtKm(r.longest_km)}));
+        if(r.best_pace_sec) parts.push(t('grp.bestPace',{p:fmtPace(Number(r.best_pace_sec))}));
+        detail = parts.join(', ');
+      }
+      top.appendChild(el('span','val', val));
+      const bar = el('div','bar'); const fill = el('div'); fill.style.width = Math.round(frac*100)+'%'; bar.appendChild(fill);
+      body.append(top, bar, el('span','detail', detail));
+      rb.appendChild(body); list.appendChild(li);
+    });
+    $('boardHint').textContent = mode==='plan' ? t('grp.hint') : '';
+    renderGroupCoast(rows.slice(0,5), mode, maxKm, gid);
+    loadFeed(gid);
+  }
+  document.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', ()=>{ S.mode = b.dataset.mode; document.querySelectorAll('[data-mode]').forEach(x => x.setAttribute('aria-pressed', x===b?'true':'false')); loadBoard(); }));
+  document.querySelectorAll('[data-period]').forEach(b => b.addEventListener('click', ()=>{ S.period = b.dataset.period; document.querySelectorAll('[data-period]').forEach(x => x.setAttribute('aria-pressed', x===b?'true':'false')); loadBoard(); }));
+  $('copyCode').addEventListener('click', async ()=>{
+    const code = $('inviteCode').textContent;
+    try{ await navigator.clipboard.writeText(code); $('copyCode').textContent=t('grp.copied'); } catch(e){ $('copyCode').textContent = code; }
+    setTimeout(()=> $('copyCode').textContent=t('grp.copy'), 1500);
+  });
+  $('shareInvite').addEventListener('click', ()=>{
+    const g = S.groups.find(x=>x.id===S.group); if(!g) return;
+    const url = location.origin + location.pathname + '?join=' + encodeURIComponent(g.invite_code);
+    shareText(t('share.invite',{group:g.name}), url);
+  });
+  $('joinForm').addEventListener('submit', async ev=>{
+    ev.preventDefault(); const msg=$('groupMsg'); msg.textContent='';
+    const code = $('joinCode').value.trim(); if(!code){ msg.textContent=t('grp.needCode'); return; }
+    const { data, error } = await sb.rpc('join_group', { p_code: code });
+    if(error){ msg.textContent = errText(error, 'grp.joinFail'); return; }
+    $('joinCode').value=''; S.group = data; showGroupForms = false; try{localStorage.setItem('mp-group', data);}catch(e){}
+    await loadGroups(); loadBoard();
+  });
+  $('createForm').addEventListener('submit', async ev=>{
+    ev.preventDefault(); const msg=$('groupMsg'); msg.textContent='';
+    const name = $('createName').value.trim(); if(!name){ msg.textContent=t('grp.needName'); return; }
+    const { data, error } = await sb.rpc('create_group', { p_name: name });
+    if(error){ msg.textContent = errText(error, 'grp.createFail'); return; }
+    $('createName').value=''; S.group = data.id; showGroupForms = false; try{localStorage.setItem('mp-group', data.id);}catch(e){}
+    await loadGroups(); loadBoard();
+  });
+  let leaveArmed = false;
+  $('leaveGroup').addEventListener('click', async ()=>{
+    const b = $('leaveGroup');
+    if(!leaveArmed){ leaveArmed = true; b.textContent=t('grp.leaveSure'); setTimeout(()=>{ leaveArmed=false; b.textContent=t('grp.leave'); }, 3000); return; }
+    leaveArmed = false; b.textContent=t('grp.leave');
+    const { error } = await sb.from('group_members').delete().eq('group_id', S.group).eq('user_id', S.me.id);
+    if(error){ $('groupMsg').textContent=t('grp.leaveFail'); return; }
+    S.group = null; await loadGroups();
+  });
+
+  // ================= pobrežie s prvými 5 bežcami =================
+  function renderGroupCoast(rows, mode, maxKm, gid){
+    const wrap = $('gCoastWrap'), box = $('gCoast'), leg = $('gLegend');
+    box.textContent = ''; leg.textContent = '';
+    if(!rows.length){ wrap.hidden = true; return; }
+    wrap.hidden = false;
+    const NS = 'http://www.w3.org/2000/svg';
+    const mk = (tag, attrs) => { const e = document.createElementNS(NS, tag); Object.entries(attrs).forEach(([k,v]) => e.setAttribute(k, v)); return e; };
+    const curve = 'M0 78 C40 66 70 84 110 72 S180 56 220 70 S290 82 340 66';
+    const svg = mk('svg', { viewBox:'0 0 340 98', role:'img', 'aria-label': t('grp.coastAria') });
+    svg.appendChild(mk('path', { d: curve+' L340 98 L0 98Z', fill:'var(--sea-soft)' }));
+    const line = mk('path', { d: curve, fill:'none', stroke:'var(--line)', 'stroke-width':'3', 'stroke-linecap':'round' });
+    svg.appendChild(line);
+    const flag = mk('g', { transform:'translate(330 46)' });
+    flag.appendChild(mk('line', { x1:'0', y1:'0', x2:'0', y2:'18', stroke:'var(--ink)', 'stroke-width':'1.5' }));
+    flag.appendChild(mk('path', { d:'M0 0 h12 l-3 4 3 4 h-12z', fill:'var(--red)' }));
+    svg.appendChild(flag);
+    box.appendChild(svg);
+    let len = 0; try{ len = line.getTotalLength(); }catch(e){}
+    const placed = [];
+    // najprv zadní, aby líder bol navrchu
+    rows.map((r,i) => ({ r, i })).reverse().forEach(({ r, i }) => {
+      const frac = mode==='plan' ? (r.pct==null ? 0 : Number(r.pct)/100) : Number(r.total_km)/Math.max(maxKm,1);
+      const f = Math.max(0, Math.min(1, frac));
+      let pt = { x: 6 + 322*f, y: 72 };
+      if(len){ try{ const q = line.getPointAtLength(len*f); pt = { x: Math.max(7, Math.min(333, q.x)), y: q.y }; }catch(e){} }
+      const lift = placed.filter(q => Math.abs(q - f) < 0.05).length; placed.push(f);
+      const cy = pt.y - 2 - lift*14;
+      const me = r.user_id === S.me.id, col = memColor(gid, r.user_id);
+      if(lift) svg.appendChild(mk('line', { x1:pt.x, y1:pt.y, x2:pt.x, y2:cy, stroke:'var(--ink)', 'stroke-width':'0.8', opacity:'0.5' }));
+      const g = mk('g', {});
+      const title = mk('title', {}); title.textContent = (i+1)+'. '+r.display_name; g.appendChild(title);
+      g.appendChild(mk('circle', { cx:pt.x, cy:cy, r:'7', fill:col, stroke:'var(--ink)', 'stroke-width': me ? '2.2' : '1.2' }));
+      const tx = mk('text', { x:pt.x, y:cy+3, 'text-anchor':'middle', 'font-size':'8.5', 'font-weight':'700', 'font-family':'Barlow Condensed, Arial Narrow, sans-serif', fill: textOn(col) });
+      tx.textContent = String(i+1); g.appendChild(tx);
+      svg.appendChild(g);
+    });
+    rows.forEach((r,i) => {
+      const me = r.user_id === S.me.id, col = memColor(gid, r.user_id);
+      const it = el('span'); const dot = el('i', null, String(i+1)); dot.style.background = col; dot.style.color = textOn(col);
+      const val = mode==='plan' ? (r.pct==null ? '–' : r.pct+' %') : fmtKm(r.total_km)+' km';
+      it.append(dot, el('span', null, r.display_name + (me ? ' '+t('grp.me') : '') + ' ' + val));
+      leg.appendChild(it);
+    });
+    $('gCoastHint').textContent = t(mode==='plan' ? 'grp.coastPlan' : 'grp.coastKm');
+  }
+
+  // ================= kalendár skupiny (mesiac) =================
+  const MCOL = ['#1A6A8A','#C2302A','#2E9E6A','#7A5CC2','#E07A2E','#0E8C9A','#A23E8C','#5B6B2E'];
+  const M = { month:null, data:null };
+  const monthStart = d => new Date(d.getFullYear(), d.getMonth(), 1);
+  function wTitleGeneric(p){
+    if(p.kind==='race') return t('race.'+distKey(p.distance_km));
+    return t({ long:'w.long', tempo:'w.tempo', mp:'w.rp', test:'w.test', easy:'w.easy' }[p.kind] || 'w.easy');
+  }
+  function renderMonthHead(){
+    const first = M.month || monthStart(today0());
+    const lbl = first.toLocaleDateString(LOCALE[LANG], { month:'long', year:'numeric' });
+    $('mLabel').textContent = lbl.charAt(0).toUpperCase() + lbl.slice(1);
+    const head = $('mHead'); head.textContent=''; days().forEach(d => head.appendChild(el('span', null, d)));
+    const gw = $('mGroupWrap'); gw.textContent = '';
+    if(S.groups.length > 1){
+      const lab = el('label', null, t('mon.group')); lab.htmlFor = 'mGroupSel'; lab.style.margin = '0';
+      const sel = el('select'); sel.id = 'mGroupSel'; sel.style.flex = '1';
+      S.groups.forEach(g => { const o = el('option', null, g.name); o.value = g.id; sel.appendChild(o); });
+      sel.value = S.group || '';
+      sel.addEventListener('change', ()=>{ S.group = sel.value; try{ localStorage.setItem('mp-group', S.group); }catch(e){} renderGroups(); loadMonth(); });
+      gw.append(lab, sel);
+    } else if(S.groups.length === 1){
+      gw.appendChild(el('span','hint', S.groups[0].name));
+    }
+  }
+  async function loadMonth(){
+    if(!S.me) return;
+    if(!M.month) M.month = monthStart(today0());
+    renderMonthHead();
+    const gid = S.group;
+    $('mNoGroup').hidden = !!gid; $('mWrap').hidden = !gid;
+    if(!gid) return;
+    const first = M.month, last = new Date(first.getFullYear(), first.getMonth()+1, 0);
+    const gFrom = monday(first), gTo = addDays(monday(last), 6);
+    if(!M.data || M.data.gid !== gid || M.data.first !== first){ $('mGrid').textContent = ''; $('mGrid').appendChild(loaderEl(t('mon.loading'))); }
+    const mem = await sb.from('group_members').select('user_id, profiles(display_name, color)').eq('group_id', gid);
+    if(gid !== S.group || first !== M.month) return;
+    if(mem.error){ $('mGrid').textContent=''; $('mGrid').appendChild(el('p','empty', t('mon.fail'))); return; }
+    const members = (mem.data||[]).map(m => ({ id:m.user_id, name:(m.profiles && m.profiles.display_name) || '', color: colorOf(m.user_id, m.profiles && m.profiles.color) }))
+      .sort((a,b) => a.id===S.me.id ? -1 : b.id===S.me.id ? 1 : a.name.localeCompare(b.name, LOCALE[LANG]));
+    S.memCache[gid] = members.map(m => ({ ...m }));
+    const ids = members.map(m => m.id);
+    const [runs, plan, adh] = await Promise.all([
+      sb.from('runs').select('id, user_id, run_date, distance_km, duration_sec, note, photo_path').in('user_id', ids).gte('run_date', iso(gFrom)).lte('run_date', iso(gTo)).limit(2000),
+      sb.from('planned_workouts').select('user_id, workout_date, kind, distance_km, pace_min_sec, pace_max_sec').in('user_id', ids).gte('workout_date', iso(gFrom)).lte('workout_date', iso(gTo)).limit(2000),
+      sb.rpc('group_adherence', { p_group: gid, p_from: iso(first), p_to: iso(last) })
+    ]);
+    if(gid !== S.group || first !== M.month) return;
+    if(runs.error){ $('mGrid').textContent=''; $('mGrid').appendChild(el('p','empty', t('mon.fail'))); return; }
+    const adhMap = {}; (adh.data || []).forEach(r => adhMap[r.user_id] = r);
+    M.data = { gid, first, last, gFrom, gTo, members, runs: runs.data || [], plan: plan.data || [], adh: adhMap };
+    renderMonth();
+  }
+  function renderMonth(){
+    const D = M.data; if(!D) return;
+    const grid = $('mGrid'); grid.textContent = '';
+    const tIso = iso(today0()), byId = {}; D.members.forEach(m => byId[m.id] = m);
+    const runsBy = {}; D.runs.forEach(r => { (runsBy[r.run_date] = runsBy[r.run_date] || []).push(r); });
+    const planBy = {}; D.plan.forEach(p => { (planBy[p.workout_date] = planBy[p.workout_date] || []).push(p); });
+    for(let d = D.gFrom; d <= D.gTo; d = addDays(d, 1)){
+      const ds = iso(d), rs = runsBy[ds] || [];
+      const who = [...new Set(rs.map(r => r.user_id))].filter(id => byId[id]);
+      const b = el('button', 'mday' + (d.getMonth() !== D.first.getMonth() ? ' out' : '') + (ds === tIso ? ' today' : '')); b.type = 'button';
+      b.appendChild(el('span','n', String(d.getDate())));
+      const dots = el('span','dots');
+      // poradie členov ako v legende; beh = plná bodka, plán = krúžok, nesplnené po termíne = bledá bodka
+      const marks = [];
+      D.members.forEach(m => {
+        if(who.includes(m.id)){ marks.push(['done', m]); return; }
+        if((planBy[ds] || []).some(p => p.user_id === m.id)) marks.push([ds < tIso ? 'missed' : 'planned', m]);
+      });
+      marks.slice(0, 6).forEach(([st, m]) => {
+        const x = el('span', st === 'planned' ? 'ring' : 'dot' + (st === 'missed' ? ' pale' : ''));
+        x.style.setProperty('--c', m.color);
+        if(st === 'planned') x.style.borderColor = m.color; else x.style.background = m.color;
+        dots.appendChild(x);
+      });
+      if(marks.length > 6) dots.appendChild(el('span','more', '+'+(marks.length-6)));
+      b.appendChild(dots);
+      const km = rs.reduce((a, r) => a + Number(r.distance_km), 0);
+      if(km) b.appendChild(el('span','dkm', fmtKm(km)+' km'));
+      b.setAttribute('aria-label', fmtDate(ds) + (who.length ? ', ' + t('mon.runners', { n: who.length }) + ', ' + fmtKm(km) + ' km' : ''));
+      b.addEventListener('click', () => openDay(ds));
+      grid.appendChild(b);
+    }
+    const leg = $('mLegend'); leg.textContent = '';
+    const mFrom = iso(D.first), mTo = iso(D.last);
+    D.members.forEach(m => {
+      const km = D.runs.filter(r => r.user_id === m.id && r.run_date >= mFrom && r.run_date <= mTo).reduce((a, r) => a + Number(r.distance_km), 0);
+      const a = D.adh[m.id];
+      const it = el('span','it'); const x = el('span','dot'); x.style.background = m.color;
+      it.append(x, el('span', null, m.name + (m.id === S.me.id ? ' ' + t('grp.me') : '')), el('span','v', t('mon.legend', { km: fmtKm(km), pct: a ? a.pct : null })));
+      leg.appendChild(it);
+    });
+  }
+  function openDay(ds){
+    const D = M.data; if(!D) return;
+    const tIso = iso(today0());
+    openSheet(b => {
+      const h = el('h2', null, fmtDate(ds)); h.id = 'sheetTitle'; b.appendChild(h);
+      const rest = [];
+      let any = false;
+      D.members.forEach(m => {
+        const rs = D.runs.filter(r => r.user_id === m.id && r.run_date === ds);
+        const pw = D.plan.find(p => p.user_id === m.id && p.workout_date === ds);
+        if(!rs.length && !pw){ rest.push(m.name); return; }
+        any = true;
+        const row = el('button','mrow'); row.type = 'button';
+        row.addEventListener('click', () => openMember(m.id, m.name));
+        const missed = !rs.length && pw && ds < tIso, planned = !rs.length && pw && ds >= tIso;
+        const x = el('span', planned ? 'ring' : 'dot' + (missed ? ' pale' : ''));
+        x.style.setProperty('--c', m.color);
+        if(planned) x.style.borderColor = m.color; else x.style.background = m.color;
+        if(missed) row.style.opacity = '0.6';
+        const body = el('div','body');
+        body.appendChild(el('strong', null, m.name + (m.id === S.me.id ? ' ' + t('grp.me') : '')));
+        rs.forEach(r => {
+          const km = Number(r.distance_km);
+          body.appendChild(el('span', null, t('mon.run', { km: fmtKm(km), time: fmtDur(r.duration_sec), pace: fmtPace(r.duration_sec / km) }) + (r.note ? ' — ' + r.note : '')));
+        });
+        if(pw){
+          const st = rs.length ? t('mon.done') : ds < tIso ? t('mon.missed') : t('mon.planned');
+          body.appendChild(el('span', null, t('mon.plan', { w: wTitleGeneric(pw) + ' ' + fmtKm(pw.distance_km) + ' km, ' + fmtPace(pw.pace_min_sec) + ' – ' + fmtPace(pw.pace_max_sec) + ' /km' }) + ' (' + st + ')'));
+        }
+        const a = D.adh[m.id];
+        if(a && a.pct != null) body.appendChild(el('span', null, t('mon.monthPct', { p: a.pct + ' %' })));
+        row.append(x, body, el('span','chev','›'));
+        b.appendChild(row);
+      });
+      if(!any) b.appendChild(el('p','empty', t('mon.nobody')));
+      if(rest.length && any) b.appendChild(el('p','hint', t('mon.rest', { names: rest.join(', ') })));
+      const cls = el('button','ghost', t('d.close')); cls.type = 'button'; cls.addEventListener('click', closeSheet);
+      b.appendChild(cls);
+    });
+  }
+  $('mPrev').addEventListener('click', () => { const m = M.month || monthStart(today0()); M.month = new Date(m.getFullYear(), m.getMonth()-1, 1); loadMonth(); });
+  $('mNext').addEventListener('click', () => { const m = M.month || monthStart(today0()); M.month = new Date(m.getFullYear(), m.getMonth()+1, 1); loadMonth(); });
+
+  // ================= behy členov skupiny =================
+  let memberNames = {};
+  function runRow(r, name, onTap, color){
+    const li0 = runRowBase(r, name, onTap, color);
+    if(r.photo_path) li0.querySelector('.meta').appendChild(photoThumb(r.photo_path, false));
+    return li0;
+  }
+  function runRowBase(r, name, onTap, color){
+    const km = Number(r.distance_km);
+    const li = el('li','run');
+    const k = el('div','km', fmtKm(km)); k.appendChild(el('small',null,'km'));
+    const meta = el('div','meta');
+    if(name){ const w = el('div','who'); w.appendChild(color ? nameWithDot(name, color) : el('span', null, name)); meta.appendChild(w); }
+    meta.appendChild(el('div',null, fmtPace(r.duration_sec/km)+' /km, '+fmtDur(r.duration_sec)));
+    meta.appendChild(el('div',null, fmtDate(r.run_date) + (r.note ? ' — '+r.note : '')));
+    li.append(k, meta);
+    if(onTap){ const b = el('button','share','›'); b.type='button'; b.setAttribute('aria-label', name || ''); b.addEventListener('click', onTap); li.appendChild(b); }
+    return li;
+  }
+  async function loadFeed(gid){
+    const ul = $('feed'); ul.textContent = ''; ul.appendChild(loaderEl(t('grp.loadingRuns'), 'li'));
+    let list;
+    try{ list = S.memCache[gid] || await groupMembers(gid); }catch(e){ if(gid === S.group){ ul.textContent=''; ul.appendChild(el('li','empty', t('grp.feedFail'))); } return; }
+    if(gid !== S.group) return;
+    memberNames = {}; list.forEach(m => memberNames[m.id] = m.name);
+    const ids = Object.keys(memberNames);
+    if(!ids.length){ ul.textContent=''; return; }
+    const res = await sb.from('runs').select('id, user_id, run_date, distance_km, duration_sec, note, photo_path, created_at').in('user_id', ids)
+      .order('run_date',{ascending:false}).order('created_at',{ascending:false}).limit(20);
+    if(gid !== S.group) return;
+    ul.textContent='';
+    if(res.error){ ul.appendChild(el('li','empty', t('grp.feedFail'))); return; }
+    if(!(res.data||[]).length){ ul.appendChild(el('li','empty', t('grp.feedEmpty'))); return; }
+    res.data.forEach(r => {
+      const nm = (memberNames[r.user_id] || '') + (r.user_id===S.me.id ? ' '+t('grp.me') : '');
+      ul.appendChild(runRow(r, nm, ()=> openMember(r.user_id, memberNames[r.user_id]), memColor(gid, r.user_id)));
+    });
+  }
+  async function openMember(uid, name){
+    openSheet(b => {
+      const h = el('h2', null, (name || '') + (uid===S.me.id ? ' '+t('grp.me') : '')); h.id = 'sheetTitle'; b.appendChild(h);
+      b.appendChild(loaderEl(t('grp.loadingRuns')));
+    });
+    const since = iso(new Date(today0().getFullYear(), today0().getMonth(), 1));
+    const [g, r] = await Promise.all([
+      sb.from('training_goals').select('race_date, race_distance_km').eq('user_id', uid).maybeSingle(),
+      sb.from('runs').select('id, run_date, distance_km, duration_sec, note, photo_path, created_at').eq('user_id', uid)
+        .order('run_date',{ascending:false}).order('created_at',{ascending:false}).limit(60)
+    ]);
+    const body = $('sheetBody'); if(!sheet.open) return;
+    body.textContent = '';
+    const h = el('h2'); h.appendChild(nameWithDot((name || '') + (uid===S.me.id ? ' '+t('grp.me') : ''), memColor(S.group, uid))); h.id = 'sheetTitle'; body.appendChild(h);
+    const tags = el('div','tags');
+    if(g.data && g.data.race_date){
+      tags.appendChild(el('span','tag', t('grp.memberGoal',{race:t('race.'+distKey(g.data.race_distance_km)), date:fmtShort(parse(g.data.race_date))})));
+    } else tags.appendChild(el('span','tag', t('grp.memberNoGoal')));
+    const runs = r.data || [];
+    const month = runs.filter(x => x.run_date >= since);
+    tags.appendChild(el('span','tag', t('grp.memberMonth',{km:fmtKm(month.reduce((a,x)=>a+Number(x.distance_km),0)), n:month.length})));
+    const lg = runs.reduce((m,x)=>Math.max(m,Number(x.distance_km)),0);
+    if(lg) tags.appendChild(el('span','tag', t('grp.longestAll',{km:fmtKm(lg)})));
+    body.appendChild(tags);
+    body.appendChild(el('h3', null, t('grp.memberRuns')));
+    const ul = el('ul','runs'); ul.style.paddingLeft = '0';
+    if(r.error) ul.appendChild(el('li','empty', t('grp.feedFail')));
+    else if(!runs.length) ul.appendChild(el('li','empty', t('grp.memberEmpty')));
+    else runs.slice(0,15).forEach(x => ul.appendChild(runRow(x, null, null)));
+    body.appendChild(ul);
+    const cls = el('button','ghost', t('d.close')); cls.type='button'; cls.addEventListener('click', closeSheet);
+    body.appendChild(cls);
+  }
+
+  // ================= zdieľanie =================
+  async function shareText(text, url){
+    if(navigator.share){
+      try{ await navigator.share({ text, url }); return; }catch(e){ if(e && e.name==='AbortError') return; }
+    }
+    try{ await navigator.clipboard.writeText(text+' '+url); toast(t('share.copied')); }catch(e){ toast(t('share.fail')); }
+  }
+  async function makeRunCard(r){
+    try{ await Promise.all([document.fonts.load('700 200px "Barlow Condensed"'), document.fonts.load('600 40px "Barlow Condensed"'), document.fonts.load('500 36px Barlow')]); }catch(e){}
+    const W = 1080, H = 1350, c = document.createElement('canvas'); c.width = W; c.height = H;
+    const x = c.getContext('2d');
+    const cond = (w, s) => w+' '+s+'px "Barlow Condensed", "Arial Narrow", Arial, sans-serif';
+    const body = (w, s) => w+' '+s+'px Barlow, system-ui, sans-serif';
+    x.fillStyle = '#0E2738'; x.fillRect(0,0,W,H);
+    // pobrežie
+    const sx = W/340, oy = 1010, sy = 3.2;
+    const wave = () => { x.beginPath(); x.moveTo(0, oy+52*sy-130); x.bezierCurveTo(40*sx, oy+40*sy-130, 70*sx, oy+58*sy-130, 110*sx, oy+46*sy-130); x.bezierCurveTo(150*sx, oy+34*sy-130, 180*sx, oy+30*sy-130, 220*sx, oy+44*sy-130); x.bezierCurveTo(260*sx, oy+58*sy-130, 290*sx, oy+56*sy-130, W, oy+40*sy-130); };
+    wave(); x.lineTo(W,H); x.lineTo(0,H); x.closePath(); x.fillStyle = '#1A6A8A'; x.fill();
+    wave(); x.strokeStyle = '#FFC72C'; x.lineWidth = 8; x.lineCap = 'round'; x.stroke();
+    // texty
+    x.fillStyle = '#FFC72C'; x.font = cond(600, 48); x.fillText('The Maltese Pacer', 80, 130);
+    x.fillStyle = '#B9CDD6'; x.font = body(500, 36); x.fillText(t('share.cardDone')+', '+fmtDate(r.run_date), 80, 190);
+    const kmTxt = fmtKm(r.distance_km);
+    x.fillStyle = '#FFFFFF'; x.font = cond(700, 300); x.fillText(kmTxt, 66, 500);
+    const kw = x.measureText(kmTxt).width; x.font = cond(600, 96); x.fillStyle = '#B9CDD6'; x.fillText('km', 66 + kw + 20, 500);
+    x.font = body(500, 32); x.fillStyle = '#B9CDD6'; x.fillText(t('share.cardPace'), 80, 600); x.fillText(t('share.cardTime'), 560, 600);
+    x.font = cond(700, 84); x.fillStyle = '#FFFFFF';
+    x.fillText(fmtPace(r.duration_sec/Number(r.distance_km))+' /km', 80, 690); x.fillText(fmtDur(r.duration_sec), 560, 690);
+    let y = 790;
+    if(r.note){
+      x.font = body(500, 38); x.fillStyle = '#FFFFFF';
+      let line = '', lines = [];
+      r.note.split(' ').forEach(w => { const test = line ? line+' '+w : w; if(x.measureText(test).width > 920 && line){ lines.push(line); line = w; } else line = test; });
+      if(line) lines.push(line);
+      lines.slice(0,2).forEach(l => { x.fillText(l, 80, y); y += 52; });
+    }
+    if(S.goal && S.maxWeek){
+      const row = S.planned.find(p => p.workout_date <= r.run_date && monday(parse(p.workout_date)).getTime() === monday(parse(r.run_date)).getTime());
+      if(row){ x.font = body(600, 34); x.fillStyle = '#FFC72C'; x.fillText(t('share.cardPlan',{a:row.week_no, b:S.maxWeek, race:t('race.'+distKey(S.goal.race_distance_km)), date:fmtShort(parse(S.goal.race_date))}), 80, y+20); }
+    }
+    x.fillStyle = '#FFFFFF'; x.font = cond(600, 52); x.fillText(t('slogan'), 80, 1230);
+    x.fillStyle = '#D5E8EF'; x.font = body(500, 32); x.fillText(location.host, 80, 1285);
+    return await new Promise(res => c.toBlob(res, 'image/png'));
+  }
+  async function shareRun(r){
+    const text = t('share.runText',{km:fmtKm(r.distance_km), time:fmtDur(r.duration_sec), pace:fmtPace(r.duration_sec/Number(r.distance_km))});
+    const url = location.origin + location.pathname;
+    let file = null;
+    try{ const blob = await makeRunCard(r); if(blob) file = new File([blob], 'maltese-pacer-'+r.run_date+'.png', { type:'image/png' }); }catch(e){}
+    if(file && navigator.canShare && navigator.canShare({ files:[file] })){
+      try{ await navigator.share({ files:[file], text: text+' '+url }); return; }catch(e){ if(e && e.name==='AbortError') return; }
+    }
+    if(navigator.share){
+      try{ await navigator.share({ text, url }); return; }catch(e){ if(e && e.name==='AbortError') return; }
+    }
+    if(file){ const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = file.name; document.body.appendChild(a); a.click(); a.remove(); }
+    try{ await navigator.clipboard.writeText(text+' '+url); }catch(e){}
+    toast(file ? t('share.imgSaved') : t('share.copied'));
+  }
+
+  // ================= fotky k behom =================
+  const PHOTO_MAX = 1600, PHOTO_Q = 0.82;
+  let photoBlob = null, photoPrevUrl = null, laterRun = null;
+  const urlCache = {};
+  async function shrinkImage(file){
+    const src = URL.createObjectURL(file);
+    try{
+      const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; });
+      const sc = Math.min(1, PHOTO_MAX / Math.max(img.naturalWidth, img.naturalHeight));
+      const w = Math.round(img.naturalWidth * sc), h = Math.round(img.naturalHeight * sc);
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      const blob = await new Promise(res => c.toBlob(res, 'image/jpeg', PHOTO_Q));
+      if(!blob) throw new Error('blob');
+      return blob;
+    } finally { URL.revokeObjectURL(src); }
+  }
+  async function uploadRunPhoto(runId, blob){
+    const path = S.me.id + '/' + runId + '.jpg';
+    const up = await sb.storage.from('run-photos').upload(path, blob, { contentType:'image/jpeg', upsert:true, cacheControl:'3600' });
+    if(up.error) return null;
+    const u = await sb.from('runs').update({ photo_path: path }).eq('id', runId);
+    if(u.error) return null;
+    delete urlCache[path];
+    return path;
+  }
+  async function photoUrl(path){
+    const c = urlCache[path];
+    if(c && c.exp > Date.now()) return c.url;
+    const { data, error } = await sb.storage.from('run-photos').createSignedUrl(path, 3600);
+    if(error || !data) return null;
+    urlCache[path] = { url: data.signedUrl, exp: Date.now() + 50*60*1000 };
+    return data.signedUrl;
+  }
+  function photoThumb(path, mine, run){
+    const b = el('button','thumb'); b.type = 'button'; b.setAttribute('aria-label', t('photo.alt'));
+    const img = el('img'); img.alt = t('photo.alt'); img.loading = 'lazy'; b.appendChild(img);
+    photoUrl(path).then(u => { if(u) img.src = u; });
+    b.addEventListener('click', () => openPhoto(path, mine ? run : null));
+    return b;
+  }
+  function openPhoto(path, ownRun){
+    openSheet(async b => {
+      const h = el('h3', null, t('photo.alt')); h.id = 'sheetTitle'; b.appendChild(h);
+      const img = el('img','photo-full'); img.alt = t('photo.alt'); b.appendChild(img);
+      photoUrl(path).then(u => { if(u) img.src = u; });
+      const btns = el('div','sheet-btns');
+      if(ownRun){
+        const rm = el('button','ghost danger', t('photo.removeFull')); rm.type = 'button';
+        rm.addEventListener('click', async () => {
+          rm.disabled = true;
+          const u = await sb.from('runs').update({ photo_path: null }).eq('id', ownRun.id);
+          if(!u.error){ try{ await sb.storage.from('run-photos').remove([path]); }catch(e){} }
+          closeSheet(); await loadRuns();
+        });
+        btns.appendChild(rm);
+      }
+      const cls = el('button','ghost', t('d.close')); cls.type = 'button'; cls.addEventListener('click', closeSheet);
+      btns.appendChild(cls); b.appendChild(btns);
+    });
+  }
+  function clearPhoto(){
+    photoBlob = null; $('photo').value = '';
+    if(photoPrevUrl){ URL.revokeObjectURL(photoPrevUrl); photoPrevUrl = null; }
+    $('photoPrev').hidden = true; $('photoDel').hidden = true; $('photoPickTxt').textContent = t('photo.add');
+  }
+  $('photo').addEventListener('change', async e => {
+    const f = e.target.files && e.target.files[0]; if(!f) return;
+    try{
+      photoBlob = await shrinkImage(f);
+      if(photoPrevUrl) URL.revokeObjectURL(photoPrevUrl);
+      photoPrevUrl = URL.createObjectURL(photoBlob);
+      $('photoPrev').src = photoPrevUrl; $('photoPrev').alt = t('photo.alt'); $('photoPrev').hidden = false;
+      $('photoDel').hidden = false; $('photoPickTxt').textContent = t('photo.change');
+    }catch(err){ clearPhoto(); toast(t('photo.fail')); }
+  });
+  $('photoDel').addEventListener('click', clearPhoto);
+  $('photoLater').addEventListener('change', async e => {
+    const f = e.target.files && e.target.files[0], r = laterRun; laterRun = null;
+    if(!f || !r) return;
+    try{
+      toast(t('photo.uploading'));
+      const blob = await shrinkImage(f);
+      const path = await uploadRunPhoto(r.id, blob);
+      toast(path ? t('photo.added') : t('photo.upFail'));
+      await loadRuns();
+    }catch(err){ toast(t('photo.fail')); }
+  });
+
+  // ================= behy =================
+  const RT = makeTimeField($('runTime'), [
+    { key:'h', items: nums(0, 9), unit:'h', label: t('u.hours') },
+    { key:'m', items: nums(0, 59, true), unit:'min', label: t('u.min') },
+    { key:'s', items: nums(0, 59, true), unit:'s', label: t('u.sec') }
+  ], { title: () => t('runs.time'), onChange: () => updatePace() });
+  const toSec = () => RT.h.get()*3600 + RT.m.get()*60 + RT.s.get();
+  function setRunTime(sec){ sec = Math.max(0, Math.round(sec)); RT.h.set(Math.min(9, Math.floor(sec/3600))); RT.m.set(Math.floor(sec%3600/60)); RT.s.set(sec%60); updatePace(); }
+  function presetFromPlan(p){ setRunTime(Number(p.distance_km) * (p.pace_min_sec + p.pace_max_sec) / 2); }
+  function updatePace(){ const km = parseKm($('km').value), sec = toSec(); $('pace').textContent = km && sec ? fmtPace(sec/km) : '–:––'; }
+  $('km').addEventListener('input', updatePace);
+  $('runForm').addEventListener('submit', async ev=>{
+    ev.preventDefault(); const msg=$('runMsg'); msg.className='msg'; msg.textContent='';
+    const km = parseKm($('km').value), sec = toSec(), date = $('date').value;
+    if(!date){ msg.textContent=t('runs.needDate'); return; }
+    if(!km){ msg.textContent=t('runs.needKm'); $('km').focus(); return; }
+    if(sec<=0){ msg.textContent=t('runs.needTime'); RT.m.el.focus(); return; }
+    if(sec/km < 120){ msg.textContent=t('err.paceTypo'); return; }
+    const btn = $('saveRun'); btn.disabled = true; btn.textContent=t('runs.saving');
+    const { data, error } = await sb.from('runs').insert({ run_date: date, distance_km: Math.round(km*100)/100, duration_sec: sec, note: $('note').value.trim() || null, rpe: rpeVal }).select().single();
+    if(error){ msg.textContent = errText(error, 'runs.saveFail'); btn.disabled=false; btn.textContent=t('runs.save'); return; }
+    if(photoBlob){
+      btn.textContent = t('photo.uploading');
+      const path = await uploadRunPhoto(data.id, photoBlob);
+      if(path) data.photo_path = path; else toast(t('photo.upFail'));
+    }
+    clearPhoto();
+    ['km','note'].forEach(id=>$(id).value=''); setRunTime(0); rpeVal = null; renderRpe();
+    btn.textContent=t('runs.saved'); setTimeout(()=>{ btn.disabled=false; btn.textContent=t('runs.save'); }, 1200);
+    // ponuka zdieľania práve uloženého behu
+    msg.className='msg ok'; msg.textContent='';
+    const sp = el('span', null, t('runs.savedShare')+' ');
+    const sbtn = el('button','share', t('c.share')); sbtn.type='button'; sbtn.style.marginLeft='6px';
+    sbtn.addEventListener('click', ()=> shareRun(data));
+    msg.append(sp, sbtn);
+    await loadRuns();
+    try{ const note = await afterRun(data); if(note){ toast(note); } }catch(e){}
+    renderPlanTab();
+  });
+  function renderRuns(){
+    const longest = S.runs.reduce((mx,r)=>Math.max(mx, Number(r.distance_km)),0);
+    const target = S.goal ? goalDist(S.goal).km : MARATHON;
+    $('longest').textContent = fmtKm(longest)+' km';
+    $('longestOf').textContent = t('runs.longestOf',{km:fmtKm(target)});
+    try{
+      const path = $('progressPath'), len = path.getTotalLength(), frac = Math.min(longest/target,1);
+      path.style.strokeDasharray = len; path.style.strokeDashoffset = len*(1-frac);
+      $('runner').setAttribute('fill', myColor());
+      const pt = path.getPointAtLength(len*frac); $('runner').style.transform = 'translate('+pt.x+'px,'+pt.y+'px)';
+    }catch(e){}
+    const ul = $('runs'); ul.textContent='';
+    if(!S.runs.length){ ul.appendChild(el('li','empty',t('runs.empty'))); return; }
+    S.runs.slice(0,100).forEach(r=>{
+      const km = Number(r.distance_km);
+      const li = el('li','run');
+      const k = el('div','km', fmtKm(km)); k.appendChild(el('small',null,'km'));
+      const meta = el('div','meta');
+      meta.appendChild(el('div',null, fmtPace(r.duration_sec/km)+' /km, '+fmtDur(r.duration_sec)+(r.rpe ? ', '+t('rpe.list',{n:r.rpe}) : '')));
+      meta.appendChild(el('div',null, fmtDate(r.run_date) + (r.note ? ' — '+r.note : '')));
+      const acts = el('div','acts');
+      const sh = el('button','share'); sh.type='button'; sh.setAttribute('aria-label', t('runs.shareAria',{km:fmtKm(km), date:fmtDate(r.run_date)}));
+      sh.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>';
+      sh.addEventListener('click', ()=> shareRun(r));
+      const del = el('button','del',t('c.delete')); del.type='button';
+      del.setAttribute('aria-label', t('runs.delAria',{km:fmtKm(km), date:fmtDate(r.run_date)}));
+      armButton(del, 'c.delete', 'c.sure', async ()=>{
+        const { error } = await sb.from('runs').delete().eq('id', r.id);
+        if(!error && r.photo_path){ try{ await sb.storage.from('run-photos').remove([r.photo_path]); }catch(e){} }
+        if(error){ $('runMsg').textContent=t('runs.delFail'); del.disabled=false; return; }
+        await loadRuns(); renderPlanTab();
+      });
+      if(r.photo_path) meta.appendChild(photoThumb(r.photo_path, true, r));
+      else {
+        const cam = el('button','share'); cam.type='button'; cam.setAttribute('aria-label', t('photo.addAria',{date:fmtDate(r.run_date)}));
+        cam.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
+        cam.addEventListener('click', ()=>{ laterRun = r; $('photoLater').value = ''; $('photoLater').click(); });
+        acts.appendChild(cam);
+      }
+      acts.append(sh, del);
+      li.append(k, meta, acts); ul.appendChild(li);
+    });
+  }
+
+  // ================= pocit po behu =================
+  let rpeVal = null;
+  function rpeWord(n){ return t(n<=2?'rpe.1':n<=4?'rpe.3':n<=6?'rpe.5':n<=8?'rpe.7':'rpe.9'); }
+  function renderRpe(){
+    const box = $('rpe'); box.textContent = '';
+    for(let n=1;n<=10;n++){
+      const b = el('button','pill', String(n)); b.type='button'; b.setAttribute('aria-pressed', rpeVal===n ? 'true':'false');
+      b.setAttribute('aria-label', n+' – '+rpeWord(n));
+      b.addEventListener('click', ()=>{ rpeVal = rpeVal===n ? null : n; renderRpe(); });
+      box.appendChild(b);
+    }
+    $('rpeHint').textContent = rpeVal ? rpeVal+'/10: '+rpeWord(rpeVal) : t('rpe.scale');
+  }
+  renderRpe();
+
+  // ================= prispôsobenie plánu =================
+  async function saveGoalPatch(patch){
+    const { error } = await sb.from('training_goals').update(patch).eq('user_id', S.me.id);
+    if(error) throw error;
+    S.goal = { ...S.goal, ...patch };
+  }
+  async function afterRun(run){
+    if(!S.goal || !run) return null;
+    // 1) kontrolný beh
+    const test = S.planned.find(x => x.workout_date === run.run_date && x.kind === 'test');
+    if(test){
+      const d = Number(run.distance_km);
+      if(d < 4.5 || d > 5.5) return t('adapt.testDist');
+      const t5 = run.duration_sec * (5/d), t10 = Math.round(riegel(t5, 5, 10));
+      if(t10 < 1500 || t10 > 7200) return null;
+      const D = goalDist(S.goal), est = Math.round(riegel(t5, 5, D.km));
+      const expected = raceAt(S.goal, parse(run.run_date)), oldT10 = Number(S.goal.recent_10k_sec) || null;
+      let trend;
+      if(oldT10){ const dlt = (oldT10 - t10) / oldT10; trend = dlt > 0.01 ? 'up' : dlt < -0.01 ? 'down' : 'flat'; }
+      else trend = est < expected*0.99 ? 'up' : est > expected*1.01 ? 'down' : 'flat';
+      const ahead = Math.round(expected - est);
+      const note = 'test|'+est+'|'+trend+'|'+ahead;
+      await saveGoalPatch({ recent_10k_sec: t10, pace_factor: 1, fitness_at: run.run_date, adapt_note: note, adapt_at: new Date().toISOString() });
+      await savePlan();
+      return formMessage(note);
+    }
+    // 2) priebežné prispôsobenie, najviac raz za 6 dní
+    if(S.goal.adapt_at && Date.now() - new Date(S.goal.adapt_at).getTime() < 6*86400000) return null;
+    const Z0 = paceZones(S.goal), easyMid = (Z0.easy[0]+Z0.easy[1])/2;
+    const byDate = {}; S.runs.forEach(r => { (byDate[r.run_date] = byDate[r.run_date] || []).push(r); });
+    const since = iso(addDays(today0(), -21)), td = iso(today0());
+    const done = S.planned.filter(p => p.workout_date >= since && p.workout_date <= td && byDate[p.workout_date]);
+    const longest = arr => arr.slice().sort((a,b)=> Number(b.distance_km)-Number(a.distance_km))[0];
+    let sig = 0;
+    done.filter(p => p.kind==='tempo' || p.kind==='mp').slice(-3).forEach(p => {
+      const r = longest(byDate[p.workout_date]);
+      if(Number(r.distance_km) < p.distance_km*0.8) return;
+      const segKm = Number(r.distance_km) - 4; if(segKm < 1) return;
+      const segPace = (r.duration_sec - 4*easyMid) / segKm;
+      if(segPace < p.pace_min_sec - 3 && (r.rpe == null || r.rpe <= 7)) sig++;
+      else if(segPace > p.pace_max_sec + 5 || (r.rpe != null && r.rpe >= 9)) sig--;
+    });
+    const easyR = done.filter(p => p.kind==='easy' || p.kind==='long').slice(-3).map(p => longest(byDate[p.workout_date])).filter(r => r.rpe != null);
+    const tired = easyR.length >= 2 && easyR.filter(r => r.rpe >= 7).length >= 2;
+    let f = Number(S.goal.pace_factor) || 1, key = null;
+    if(tired){ f = Math.min(1.10, f*1.02); key = 'tired'; }
+    else if(sig <= -2){ f = Math.min(1.10, f*1.02); key = 'slower'; }
+    else if(sig >= 2){ f = Math.max(0.90, f*0.98); key = 'faster'; }
+    if(!key || Math.abs(f - (Number(S.goal.pace_factor)||1)) < 0.001) return null;
+    f = Math.round(f*1000)/1000;
+    const Z1 = paceZones({ ...S.goal, pace_factor: f });
+    const secs = Math.max(1, Math.round(Math.abs((Z1.easy[0]+Z1.easy[1])/2 - easyMid)));
+    await saveGoalPatch({ pace_factor: f, adapt_note: key+'|'+secs, adapt_at: new Date().toISOString() });
+    await savePlan();
+    return t('adapt.'+key,{s:secs});
+  }
+  function formMessage(note){
+    const [key, val, trend, ahead] = String(note).split('|');
+    if(key !== 'test') return t('adapt.'+key,{s:val});
+    let msg = t('adapt.test',{time:fmtDur(Number(val))});
+    if(trend){
+      const a = Number(ahead) || 0;
+      const pos = Math.abs(a) < 30 ? t('trend.onTrack') : a > 0 ? t('trend.ahead',{x:fmtDur(Math.abs(a))}) : t('trend.behind',{x:fmtDur(Math.abs(a))});
+      msg = t('trend.'+trend)+'. '+msg+' '+pos+(trend !== 'up' ? ' '+t('trend.tip.'+trend) : '');
+    }
+    return msg;
+  }
+  function renderAdapt(){
+    const n = $('pAdapt'); n.hidden = true;
+    const g = S.goal; if(!g || !g.adapt_note || !g.adapt_at) return;
+    if(Date.now() - new Date(g.adapt_at).getTime() > 14*86400000) return;
+    n.textContent = formMessage(g.adapt_note);
+    n.hidden = false;
+  }
+  function renderForm(){
+    const box = $('pForm'); box.textContent = '';
+    const g = S.goal; if(!g){ box.hidden = true; return; }
+    const target = goalTarget(g), cur = currentRace(g), f = Number(g.pace_factor) || 1;
+    if(!target && !cur){ box.hidden = true; return; }
+    box.hidden = false;
+    const top = el('div','between');
+    top.appendChild(el('h3', null, t('form.title')));
+    const [key, , trend] = String(g.adapt_note || '').split('|');
+    const tr = key==='test' && trend ? trend : key==='faster' ? 'up' : (key==='slower' || key==='tired') ? 'down' : null;
+    if(tr) top.appendChild(el('span','badge '+(tr==='up' ? 'b-done' : tr==='down' ? 'b-today' : 'b-key'), (tr==='up' ? '↑ ' : tr==='down' ? '↓ ' : '→ ')+t('trend.'+tr)));
+    box.appendChild(top);
+    const ul = el('div','stack'); ul.style.gap = '2px';
+    ul.appendChild(el('span', null, cur ? t('form.now',{t:fmtDur(Math.round(cur*f))}) : t('form.unknown')));
+    if(target) ul.appendChild(el('span', null, t('form.goal',{t:fmtDur(Math.round(target))})));
+    ul.appendChild(el('span','hint', t('form.plan',{t:fmtDur(Math.round(raceAt(g, today0())))})));
+    box.appendChild(ul);
+  }
+
+  // ================= vzhľad =================
+  function renderLook(){
+    const st = window.mpApplyTheme ? window.mpApplyTheme() : { mode:'system', bg:'sea', dark:false };
+    document.querySelectorAll('[data-theme-mode]').forEach(b => b.setAttribute('aria-pressed', b.dataset.themeMode === st.mode ? 'true' : 'false'));
+    const box = $('bgSwatches'); if(!box) return; box.textContent = '';
+    (window.MP_BG || []).forEach(p => {
+      const v = st.dark ? p.dark : p.light;
+      const b = el('button','sw', LANG === 'sk' ? p.sk : p.en); b.type = 'button';
+      b.style.background = v.bg; b.style.color = st.dark ? '#E6F0F3' : '#0E2738';
+      b.setAttribute('aria-pressed', p.id === st.bg ? 'true' : 'false');
+      b.addEventListener('click', () => { try{ localStorage.setItem('mp-bg', p.id); }catch(e){} renderLook(); });
+      box.appendChild(b);
+    });
+  }
+  document.querySelectorAll('[data-theme-mode]').forEach(b => b.addEventListener('click', () => { try{ localStorage.setItem('mp-theme', b.dataset.themeMode); }catch(e){} renderLook(); }));
+  window.mpOnTheme = renderLook;
+  renderLook();
+
+  // ================= profil =================
+  function renderSwatches(){
+    const box = $('swatches'); if(!box) return; box.textContent = '';
+    const cur = myColor();
+    PALETTE.forEach(([hex, sk, en]) => {
+      const b = el('button','sw'); b.type='button'; b.style.background = hex;
+      b.setAttribute('aria-label', LANG==='sk' ? sk : en); b.setAttribute('aria-pressed', hex===cur ? 'true':'false');
+      b.addEventListener('click', async ()=>{
+        if(hex === cur) return;
+        const { error } = await sb.from('profiles').update({ color: hex }).eq('id', S.me.id);
+        if(error){ toast(errText(error, 'prof.colorFail')); return; }
+        S.profile.color = hex; renderSwatches(); renderRuns(); toast(t('c.saved'));
+        if(S.group && S.memCache[S.group]) S.memCache[S.group] = S.memCache[S.group].map(m => m.id===S.me.id ? { ...m, color: hex } : m);
+      });
+      box.appendChild(b);
+    });
+  }
+  $('nameForm').addEventListener('submit', async ev=>{
+    ev.preventDefault(); const msg=$('nameMsg'); msg.className='msg'; msg.textContent='';
+    const name = $('myName').value.trim(); if(!name){ msg.textContent=t('prof.nameEmpty'); return; }
+    const { error } = await sb.from('profiles').update({ display_name: name }).eq('id', S.me.id);
+    if(error){ msg.textContent=t('prof.nameFail'); return; }
+    msg.className='msg ok'; msg.textContent=t('c.saved'); await loadProfile();
+  });
+
+  applyI18n(); setAuthMode(false); renderJoinNotice(); $('bootText').textContent = t('c.loading');
+  sb.auth.getSession().then(({ data })=>{ if(!data.session){ $('authView').hidden = false; hideBoot(); } }).catch(hideBoot);
+
+})();
+</script>
+</body>
+</html>
