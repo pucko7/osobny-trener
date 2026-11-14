@@ -304,7 +304,8 @@ nav.tabs svg{width:21px;height:21px}
 .post .nums{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px;color:var(--muted)}
 .post .nums b{font-family:var(--display);font-size:22px;font-weight:700;color:var(--ink);margin-right:3px}
 .post .nums .rpe b{color:var(--rc,var(--ink))}
-.rmap{height:280px;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--bg);z-index:0}
+.rmap{height:280px;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#E8EEF0;z-index:0;position:relative}
+.rmap .leaflet-tile-pane{filter:none}
 .rmeta{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px;color:var(--muted)}
 .rmeta b{font-family:var(--display);font-size:24px;color:var(--ink);margin-right:3px}
 .rbtns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
@@ -2801,11 +2802,17 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
   }
   $('routeKm').addEventListener('input', () => { $('routeKm').dataset.touched = '1'; });
   function loadLeaflet(){
-    if(window.L) return Promise.resolve();
-    return new Promise((res, rej) => {
-      const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css'; document.head.appendChild(css);
-      const js = document.createElement('script'); js.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js'; js.onload = res; js.onerror = rej; document.head.appendChild(js);
+    if(window.L && document.getElementById('leafletCss')) return Promise.resolve();
+    const base = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/';
+    const css = new Promise((res, rej) => {
+      if(document.getElementById('leafletCss')) return res();
+      const l = document.createElement('link'); l.id = 'leafletCss'; l.rel = 'stylesheet'; l.href = base + 'leaflet.css';
+      l.onload = res; l.onerror = rej; document.head.appendChild(l);
     });
+    const js = window.L ? Promise.resolve() : new Promise((res, rej) => {
+      const x = document.createElement('script'); x.src = base + 'leaflet.js'; x.onload = res; x.onerror = rej; document.head.appendChild(x);
+    });
+    return Promise.all([css, js]);
   }
   function getPosition(){
     return new Promise((res, rej) => {
