@@ -296,6 +296,17 @@ nav.tabs svg{width:21px;height:21px}
 .shame{border:2px solid var(--red)}
 .shame h2{color:var(--red)}
 .chips2{display:flex;flex-wrap:wrap;gap:6px}
+.post{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.post .ph{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px 6px}
+.post .when{font-size:13px;color:var(--muted);white-space:nowrap}
+.post .nums{display:flex;gap:18px;padding:0 14px 10px}
+.post .nums b{font-family:var(--display);font-size:28px;font-weight:700;line-height:1;display:block}
+.post .nums span{font-size:12px;color:var(--muted)}
+.post .note{padding:0 14px 12px;font-size:15px;overflow-wrap:anywhere}
+.post .media img,.post .media video{display:block;width:100%;max-height:520px;object-fit:cover;background:#000}
+.post .media video{object-fit:contain}
+.vbadge{position:absolute;left:6px;bottom:6px;background:rgba(0,0,0,.6);color:#fff;font-size:11px;border-radius:6px;padding:1px 6px}
+.thumb{position:relative}
 
 /* jazyk, zdieľanie, oznámenia */
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px}
@@ -522,11 +533,14 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
       </div>
       <div><label for="note" data-i18n="runs.note">Trasa alebo poznámka</label><input id="note" type="text" maxlength="80" data-i18n-ph="runs.notePh" placeholder="Sliema → St Julian’s a späť" autocomplete="off"></div>
       <div>
-        <span class="lbl" data-i18n="photo.label">Fotka (nepovinné)</span>
+        <span class="lbl" data-i18n="photo.label">Fotka alebo video (nepovinné)</span>
         <div class="photoRow">
           <label class="ghost photoPick" for="photo" style="display:inline-flex;align-items:center;min-height:44px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg><span id="photoPickTxt" data-i18n="photo.add">Pridať fotku</span></label>
           <input id="photo" type="file" accept="image/*" class="sr-only">
+          <label class="ghost photoPick" for="video" style="display:inline-flex;align-items:center;min-height:44px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3z"/></svg><span id="videoPickTxt" data-i18n="video.add">Pridať video</span></label>
+          <input id="video" type="file" accept="video/*" class="sr-only">
           <img id="photoPrev" class="thumb" hidden alt="">
+          <video id="videoPrev" class="thumb" hidden muted playsinline preload="metadata"></video>
           <button type="button" class="del" id="photoDel" hidden data-i18n="photo.remove">Odstrániť</button>
         </div>
       </div>
@@ -609,11 +623,10 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
     <div id="wGroupWrap" class="inline" style="align-items:center"></div>
     <p class="empty" id="wNoGroup" hidden data-i18n="chat.noGroup">Chat patrí skupine. Najprv sa pridaj do skupiny alebo ju založ.</p>
     <div id="wWrap" class="stack">
-      <div class="seg" role="group" data-i18n-aria="grp.period" aria-label="Obdobie">
-        <button type="button" data-wp="this" aria-pressed="true" data-i18n="wall.thisWeek">Tento týždeň</button>
-        <button type="button" data-wp="last" aria-pressed="false" data-i18n="wall.lastWeek">Minulý týždeň</button>
-      </div>
       <div id="wallBody" class="stack"></div>
+      <h2 data-i18n="wall.feed">Behy členov</h2>
+      <div id="wallFeed" class="stack" style="gap:12px"></div>
+      <button class="ghost" id="wallMore" type="button" hidden data-i18n="wall.more">Načítať staršie</button>
     </div>
   </section>
 
@@ -766,7 +779,9 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
       'runs.empty':'Zatiaľ žiadne behy. Pridaj prvý vyššie.', 'runs.delAria':'Zmazať beh {km} km z {date}', 'runs.shareAria':'Zdieľať beh {km} km z {date}',
       'runs.savedShare':'Uložené. Chceš sa pochváliť?',
       'c.delete':'Zmazať', 'c.loading':'Načítavam…',
-      'photo.label':'Fotka (nepovinné)', 'photo.add':'Pridať fotku', 'photo.change':'Zmeniť fotku', 'photo.remove':'Odstrániť', 'photo.removeFull':'Odstrániť fotku',
+      'photo.label':'Fotka alebo video (nepovinné)', 'video.add':'Pridať video', 'video.change':'Zmeniť video', 'video.alt':'Video z behu', 'video.removeFull':'Odstrániť video',
+      'video.tooBig':'Video je príliš veľké. Najviac {mb} MB, skús kratšie video (do 1 minúty).', 'video.tooLong':'Video môže mať najviac {s} sekúnd.', 'video.uploading':'Nahrávam video…', 'video.fail':'Video sa nepodarilo nahrať.',
+      'wall.feed':'Behy členov', 'wall.more':'Načítať staršie', 'wall.feedEmpty':'Zatiaľ žiadne behy. Buď prvý!', 'wall.pace':'tempo', 'wall.dist':'vzdialenosť', 'wall.time':'čas', 'photo.add':'Pridať fotku', 'photo.change':'Zmeniť fotku', 'photo.remove':'Odstrániť', 'photo.removeFull':'Odstrániť fotku',
       'photo.alt':'Fotka z behu', 'photo.fail':'Fotku sa nepodarilo spracovať. Skús inú.', 'photo.upFail':'Beh je uložený, ale fotku sa nepodarilo nahrať.',
       'photo.addAria':'Pridať fotku k behu z {date}', 'photo.uploading':'Nahrávam fotku…', 'photo.added':'Fotka pridaná.', 'c.done':'Hotovo', 'goal.notSet':'nezadané', 'c.sure':'Naozaj?', 'c.save':'Uložiť', 'c.cancel':'Zrušiť', 'c.share':'Zdieľať', 'c.saved':'Uložené.',
       'prof.title':'Profil', 'prof.nameAria':'Moje meno v rebríčku', 'prof.saveName':'Uložiť meno', 'prof.nameEmpty':'Meno nemôže byť prázdne.',
@@ -877,7 +892,9 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
       'runs.empty':'No runs yet. Add your first one above.', 'runs.delAria':'Delete {km} km run from {date}', 'runs.shareAria':'Share {km} km run from {date}',
       'runs.savedShare':'Saved. Want to show it off?',
       'c.delete':'Delete', 'c.loading':'Loading…',
-      'photo.label':'Photo (optional)', 'photo.add':'Add photo', 'photo.change':'Change photo', 'photo.remove':'Remove', 'photo.removeFull':'Remove photo',
+      'photo.label':'Photo or video (optional)', 'video.add':'Add video', 'video.change':'Change video', 'video.alt':'Run video', 'video.removeFull':'Remove video',
+      'video.tooBig':'The video is too large. Max {mb} MB, try a shorter clip (under 1 minute).', 'video.tooLong':'The video can be at most {s} seconds long.', 'video.uploading':'Uploading video…', 'video.fail':'Couldn’t upload the video.',
+      'wall.feed':'Members’ runs', 'wall.more':'Load older', 'wall.feedEmpty':'No runs yet. Be the first!', 'wall.pace':'pace', 'wall.dist':'distance', 'wall.time':'time', 'photo.add':'Add photo', 'photo.change':'Change photo', 'photo.remove':'Remove', 'photo.removeFull':'Remove photo',
       'photo.alt':'Run photo', 'photo.fail':'Couldn’t process the photo. Try another one.', 'photo.upFail':'Run saved, but the photo couldn’t be uploaded.',
       'photo.addAria':'Add a photo to the run from {date}', 'photo.uploading':'Uploading photo…', 'photo.added':'Photo added.', 'c.done':'Done', 'goal.notSet':'not set', 'c.sure':'Sure?', 'c.save':'Save', 'c.cancel':'Cancel', 'c.share':'Share', 'c.saved':'Saved.',
       'prof.title':'Profile', 'prof.nameAria':'My name on the leaderboard', 'prof.saveName':'Save name', 'prof.nameEmpty':'Name can’t be empty.',
@@ -1099,7 +1116,7 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
     if(/Password should be/i.test(m)) return t('auth.pwShort');
     if(/rate limit/i.test(m)) return t('err.rate');
     if(/runs_realistic_pace/.test(m)) return t('err.paceTypo');
-    if(/relation .* does not exist|Could not find the table|race_distance_km|goal_kind_check|goal_time_sec_check|group_adherence|group_messages|excused|photo_path|Bucket not found|rpe|pace_factor|adapt_|fitness_at|planned_workouts_kind_check/i.test(m)) return t('err.db');
+    if(/relation .* does not exist|Could not find the table|race_distance_km|goal_kind_check|goal_time_sec_check|group_adherence|group_messages|excused|video_path|photo_path|Bucket not found|rpe|pace_factor|adapt_|fitness_at|planned_workouts_kind_check/i.test(m)) return t('err.db');
     if(/Neplatný pozývací kód/.test(m)) return t('err.code');
     if(/Nie si prihlásený/.test(m)) return t('err.auth');
     return t(fallbackKey || 'err.generic');
@@ -1208,7 +1225,7 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
     renderSwatches();
   }
   async function loadRuns(){
-    const { data, error } = await sb.from('runs').select('id, run_date, distance_km, duration_sec, note, rpe, photo_path, created_at').eq('user_id', S.me.id).order('run_date',{ascending:false}).order('created_at',{ascending:false}).limit(1000);
+    const { data, error } = await sb.from('runs').select('id, run_date, distance_km, duration_sec, note, rpe, photo_path, video_path, created_at').eq('user_id', S.me.id).order('run_date',{ascending:false}).order('created_at',{ascending:false}).limit(1000);
     if(error){ $('runs').textContent=''; $('runs').appendChild(el('li','empty',t('runs.loadFail'))); return; }
     S.runs = data || []; renderRuns();
   }
@@ -2134,7 +2151,7 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
     S.memCache[gid] = members.map(m => ({ ...m }));
     const ids = members.map(m => m.id);
     const [runs, plan, adh] = await Promise.all([
-      sb.from('runs').select('id, user_id, run_date, distance_km, duration_sec, note, photo_path').in('user_id', ids).gte('run_date', iso(gFrom)).lte('run_date', iso(gTo)).limit(2000),
+      sb.from('runs').select('id, user_id, run_date, distance_km, duration_sec, note, photo_path, video_path').in('user_id', ids).gte('run_date', iso(gFrom)).lte('run_date', iso(gTo)).limit(2000),
       sb.from('planned_workouts').select('user_id, workout_date, kind, distance_km, pace_min_sec, pace_max_sec, excused').in('user_id', ids).gte('workout_date', iso(gFrom)).lte('workout_date', iso(gTo)).limit(2000),
       sb.rpc('group_adherence', { p_group: gid, p_from: iso(first), p_to: iso(last) })
     ]);
@@ -2305,16 +2322,14 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
   });
 
   // ================= nástenka =================
-  let wallPeriod = 'this';
-  document.querySelectorAll('[data-wp]').forEach(b => b.addEventListener('click', () => {
-    wallPeriod = b.dataset.wp; document.querySelectorAll('[data-wp]').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); loadWall();
-  }));
+  const wallPeriod = 'this';
   async function loadWall(){
     groupPicker('wGroupWrap', loadWall);
     const gid = S.group;
     $('wNoGroup').hidden = !!gid; $('wWrap').hidden = !gid;
     if(!gid) return;
     const body = $('wallBody'); body.textContent = ''; body.appendChild(loaderEl());
+    loadWallFeed(gid, true);
     const t0 = today0(), tIso = iso(t0), wk = monday(t0);
     const from = wallPeriod === 'this' ? wk : addDays(wk, -7), to = wallPeriod === 'this' ? addDays(wk, 6) : addDays(wk, -1);
     let members;
@@ -2411,6 +2426,7 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
   function runRow(r, name, onTap, color){
     const li0 = runRowBase(r, name, onTap, color);
     if(r.photo_path) li0.querySelector('.meta').appendChild(photoThumb(r.photo_path, false));
+    if(r.video_path) li0.querySelector('.meta').appendChild(videoThumb(r.video_path, false));
     return li0;
   }
   function runRowBase(r, name, onTap, color){
@@ -2433,7 +2449,7 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
     memberNames = {}; list.forEach(m => memberNames[m.id] = m.name);
     const ids = Object.keys(memberNames);
     if(!ids.length){ ul.textContent=''; return; }
-    const res = await sb.from('runs').select('id, user_id, run_date, distance_km, duration_sec, note, photo_path, created_at').in('user_id', ids)
+    const res = await sb.from('runs').select('id, user_id, run_date, distance_km, duration_sec, note, photo_path, video_path, created_at').in('user_id', ids)
       .order('run_date',{ascending:false}).order('created_at',{ascending:false}).limit(20);
     if(gid !== S.group) return;
     ul.textContent='';
@@ -2452,7 +2468,7 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
     const since = iso(new Date(today0().getFullYear(), today0().getMonth(), 1));
     const [g, r] = await Promise.all([
       sb.from('training_goals').select('race_date, race_distance_km').eq('user_id', uid).maybeSingle(),
-      sb.from('runs').select('id, run_date, distance_km, duration_sec, note, photo_path, created_at').eq('user_id', uid)
+      sb.from('runs').select('id, run_date, distance_km, duration_sec, note, photo_path, video_path, created_at').eq('user_id', uid)
         .order('run_date',{ascending:false}).order('created_at',{ascending:false}).limit(60)
     ]);
     const body = $('sheetBody'); if(!sheet.open) return;
@@ -2627,6 +2643,132 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
     }catch(err){ toast(t('photo.fail')); }
   });
 
+  // ================= video k behom =================
+  const VIDEO_MAX_MB = 45, VIDEO_MAX_S = 60;
+  let videoFile = null, videoPrevUrl = null;
+  async function videoDuration(file){
+    const u = URL.createObjectURL(file);
+    try{
+      return await new Promise(res => { const v = document.createElement('video'); v.preload = 'metadata'; v.muted = true;
+        v.onloadedmetadata = () => res(v.duration); v.onerror = () => res(null); v.src = u; setTimeout(() => res(null), 8000); });
+    } finally { setTimeout(() => URL.revokeObjectURL(u), 1000); }
+  }
+  async function checkVideo(f){
+    if(f.size > VIDEO_MAX_MB*1024*1024){ toast(t('video.tooBig',{mb:VIDEO_MAX_MB})); return false; }
+    const d = await videoDuration(f);
+    if(d && isFinite(d) && d > VIDEO_MAX_S + 1){ toast(t('video.tooLong',{s:VIDEO_MAX_S})); return false; }
+    return true;
+  }
+  async function uploadRunVideo(runId, file){
+    const ext = (/\.(mp4|mov|m4v|webm)$/i.exec(file.name || '') || [,'mp4'])[1].toLowerCase();
+    const type = file.type || (ext === 'mov' ? 'video/quicktime' : 'video/mp4');
+    const path = S.me.id + '/' + runId + '-video.' + ext;
+    const up = await sb.storage.from('run-photos').upload(path, file, { contentType:type, upsert:true, cacheControl:'3600' });
+    if(up.error) return null;
+    const u = await sb.from('runs').update({ video_path: path }).eq('id', runId);
+    if(u.error) return null;
+    delete urlCache[path];
+    return path;
+  }
+  function videoThumb(path, mine, run){
+    const b = el('button','thumb'); b.type = 'button'; b.setAttribute('aria-label', t('video.alt'));
+    const v = el('video'); v.muted = true; v.playsInline = true; v.preload = 'metadata';
+    v.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:10px;display:block;pointer-events:none';
+    b.append(v, el('span','vbadge','▶'));
+    photoUrl(path).then(u => { if(u) v.src = u + '#t=0.5'; });
+    b.addEventListener('click', () => openVideo(path, mine ? run : null));
+    return b;
+  }
+  function mediaVideo(path){
+    const v = el('video','photo-full'); v.controls = true; v.playsInline = true; v.preload = 'metadata';
+    v.setAttribute('aria-label', t('video.alt'));
+    photoUrl(path).then(u => { if(u) v.src = u; });
+    return v;
+  }
+  function openVideo(path, ownRun){
+    openSheet(b => {
+      const h = el('h3', null, t('video.alt')); h.id = 'sheetTitle'; b.appendChild(h);
+      b.appendChild(mediaVideo(path));
+      const btns = el('div','sheet-btns');
+      if(ownRun){
+        const rm = el('button','ghost danger', t('video.removeFull')); rm.type = 'button';
+        rm.addEventListener('click', async () => {
+          rm.disabled = true;
+          const u = await sb.from('runs').update({ video_path: null }).eq('id', ownRun.id);
+          if(!u.error){ try{ await sb.storage.from('run-photos').remove([path]); }catch(e){} }
+          closeSheet(); await loadRuns();
+        });
+        btns.appendChild(rm);
+      }
+      const cls = el('button','ghost', t('d.close')); cls.type = 'button'; cls.addEventListener('click', closeSheet);
+      btns.appendChild(cls); b.appendChild(btns);
+    });
+  }
+  sheet.addEventListener('close', () => sheet.querySelectorAll('video').forEach(v => { try{ v.pause(); }catch(e){} }));
+  function clearVideo(){
+    videoFile = null; $('video').value = '';
+    if(videoPrevUrl){ URL.revokeObjectURL(videoPrevUrl); videoPrevUrl = null; }
+    $('videoPrev').hidden = true; $('videoPrev').removeAttribute('src'); $('videoPickTxt').textContent = t('video.add');
+    $('photoDel').hidden = !photoBlob;
+  }
+  $('video').addEventListener('change', async e => {
+    const f = e.target.files && e.target.files[0]; if(!f) return;
+    if(!(await checkVideo(f))){ clearVideo(); return; }
+    videoFile = f;
+    if(videoPrevUrl) URL.revokeObjectURL(videoPrevUrl);
+    videoPrevUrl = URL.createObjectURL(f);
+    $('videoPrev').src = videoPrevUrl + '#t=0.5'; $('videoPrev').hidden = false;
+    $('videoPickTxt').textContent = t('video.change'); $('photoDel').hidden = false;
+  });
+  $('photoDel').addEventListener('click', clearVideo);
+
+  // ================= feed behov na nástenke =================
+  const WF = { gid:null, before:null, busy:false };
+  async function loadWallFeed(gid, reset){
+    if(WF.busy) return;
+    const box = $('wallFeed');
+    if(reset){ WF.gid = gid; WF.before = null; box.textContent = ''; box.appendChild(loaderEl()); }
+    WF.busy = true;
+    try{
+      const members = S.memCache[gid] || await groupMembers(gid);
+      const ids = members.map(m => m.id), byId = {}; members.forEach(m => byId[m.id] = m);
+      let q = sb.from('runs').select('id, user_id, run_date, distance_km, duration_sec, note, photo_path, video_path, created_at')
+        .in('user_id', ids).order('created_at', { ascending:false }).limit(15);
+      if(WF.before) q = q.lt('created_at', WF.before);
+      const { data, error } = await q;
+      if(gid !== S.group || gid !== WF.gid) return;
+      if(reset) box.textContent = '';
+      if(error){ box.appendChild(el('p','empty', errText(error, 'wall.fail'))); return; }
+      const rows = data || [];
+      if(!rows.length && reset) box.appendChild(el('p','empty', t('wall.feedEmpty')));
+      rows.forEach(r => box.appendChild(postCard(r, byId[r.user_id])));
+      if(rows.length) WF.before = rows[rows.length-1].created_at;
+      $('wallMore').hidden = rows.length < 15;
+    } catch(e){ if(reset){ box.textContent = ''; box.appendChild(el('p','empty', t('wall.fail'))); } }
+    finally { WF.busy = false; }
+  }
+  $('wallMore').addEventListener('click', () => loadWallFeed(S.group, false));
+  function postCard(r, m){
+    const km = Number(r.distance_km), me = r.user_id === S.me.id;
+    const c = el('article','post');
+    const head = el('div','ph');
+    head.append(nameWithDot((m ? m.name : '') + (me ? ' ' + t('grp.me') : ''), m ? m.color : defaultColor(r.user_id)), el('span','when', fmtDate(r.run_date)));
+    head.firstChild.style.fontWeight = '600';
+    c.appendChild(head);
+    const nums = el('div','nums');
+    [[fmtKm(km) + ' km', t('wall.dist')], [fmtPace(r.duration_sec / km) + ' /km', t('wall.pace')], [fmtDur(r.duration_sec), t('wall.time')]].forEach(([v, l]) => { const d = el('div'); d.append(el('b', null, v), el('span', null, l)); nums.appendChild(d); });
+    c.appendChild(nums);
+    if(r.note) c.appendChild(el('p','note', r.note));
+    if(r.video_path){ const md = el('div','media'); const v = mediaVideo(r.video_path); v.className = ''; md.appendChild(v); c.appendChild(md); }
+    if(r.photo_path){
+      const md = el('div','media'); const img = el('img'); img.alt = t('photo.alt'); img.loading = 'lazy';
+      photoUrl(r.photo_path).then(u => { if(u) img.src = u; });
+      img.style.cursor = 'pointer'; img.addEventListener('click', () => openPhoto(r.photo_path, null));
+      md.appendChild(img); c.appendChild(md);
+    }
+    return c;
+  }
+
   // ================= behy =================
   const RT = makeTimeField($('runTime'), [
     { key:'h', items: nums(0, 9), unit:'h', label: t('u.hours') },
@@ -2653,7 +2795,12 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
       const path = await uploadRunPhoto(data.id, photoBlob);
       if(path) data.photo_path = path; else toast(t('photo.upFail'));
     }
-    clearPhoto();
+    if(videoFile){
+      btn.textContent = t('video.uploading');
+      const vp = await uploadRunVideo(data.id, videoFile);
+      if(vp) data.video_path = vp; else toast(t('video.fail'));
+    }
+    clearPhoto(); clearVideo();
     ['km','note'].forEach(id=>$(id).value=''); setRunTime(0); rpeVal = null; renderRpe();
     btn.textContent=t('runs.saved'); setTimeout(()=>{ btn.disabled=false; btn.textContent=t('runs.save'); }, 1200);
     // ponuka zdieľania práve uloženého behu
@@ -2694,10 +2841,11 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
       del.setAttribute('aria-label', t('runs.delAria',{km:fmtKm(km), date:fmtDate(r.run_date)}));
       armButton(del, 'c.delete', 'c.sure', async ()=>{
         const { error } = await sb.from('runs').delete().eq('id', r.id);
-        if(!error && r.photo_path){ try{ await sb.storage.from('run-photos').remove([r.photo_path]); }catch(e){} }
+        if(!error){ const rm = [r.photo_path, r.video_path].filter(Boolean); if(rm.length){ try{ await sb.storage.from('run-photos').remove(rm); }catch(e){} } }
         if(error){ $('runMsg').textContent=t('runs.delFail'); del.disabled=false; return; }
         await loadRuns(); renderPlanTab();
       });
+      if(r.video_path) meta.appendChild(videoThumb(r.video_path, true, r));
       if(r.photo_path) meta.appendChild(photoThumb(r.photo_path, true, r));
       else {
         const cam = el('button','share'); cam.type='button'; cam.setAttribute('aria-label', t('photo.addAria',{date:fmtDate(r.run_date)}));
