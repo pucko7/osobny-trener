@@ -304,6 +304,12 @@ nav.tabs svg{width:21px;height:21px}
 .post .nums{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px;color:var(--muted)}
 .post .nums b{font-family:var(--display);font-size:22px;font-weight:700;color:var(--ink);margin-right:3px}
 .post .nums .rpe b{color:var(--rc,var(--ink))}
+.rmap{height:280px;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--bg);z-index:0}
+.rmeta{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px;color:var(--muted)}
+.rmeta b{font-family:var(--display);font-size:24px;color:var(--ink);margin-right:3px}
+.rbtns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.rbtns .ghost{padding:0 6px;font-size:14px}
+.leaflet-container{font:inherit}
 .post .note{margin:0;font-size:14px;color:var(--muted);overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .post .media{display:flex;flex-direction:column;gap:6px;flex:none}
 .post .media .thumb{margin-top:0;width:84px;height:84px}
@@ -520,6 +526,26 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
       </svg>
       <div class="coast-label"><strong id="longest">0 km</strong><span id="longestOf"></span></div>
     </div>
+
+    <section class="card stack" id="routeCard" aria-labelledby="routeTitle" style="gap:10px">
+      <h2 id="routeTitle" data-i18n="route.title">Trasa na najbližší tréning</h2>
+      <p class="hint" id="routeNext" style="margin:0"></p>
+      <div class="inline" style="align-items:flex-end">
+        <div style="flex:1 1 120px"><label for="routeKm" data-i18n="route.km">Dĺžka okruhu (km)</label><input id="routeKm" type="text" inputmode="decimal" autocomplete="off"></div>
+        <button class="primary" id="routeGo" type="button" style="width:auto;flex:1 1 160px" data-i18n="route.go">Navrhnúť okruh</button>
+      </div>
+      <p class="msg" id="routeMsg" role="status"></p>
+      <div id="routeOut" class="stack" style="gap:10px" hidden>
+        <div class="rmap" id="routeMap" role="img" data-i18n-aria="route.mapAria" aria-label="Mapa navrhnutého okruhu"></div>
+        <div class="rmeta" id="routeMeta"></div>
+        <div class="rbtns">
+          <button class="ghost" id="routeAgain" type="button" data-i18n="route.again">Iný okruh</button>
+          <button class="ghost" id="routeGpx" type="button" data-i18n="route.gpx">Stiahnuť GPX</button>
+          <button class="ghost" id="routeGmaps" type="button" data-i18n="route.gmaps">Mapy Google</button>
+        </div>
+        <p class="hint" style="margin:0;font-size:12px" data-i18n="route.attr">Mapa © prispievatelia OpenStreetMap, trasy FOSSGIS / OSRM. Trasu si pred behom skontroluj, nie každý chodník je vhodný.</p>
+      </div>
+    </section>
 
     <form id="runForm" class="card stack" novalidate>
       <h2 data-i18n="runs.add">Pridať beh</h2>
@@ -784,7 +810,13 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
       'runs.empty':'Zatiaľ žiadne behy. Pridaj prvý vyššie.', 'runs.delAria':'Zmazať beh {km} km z {date}', 'runs.shareAria':'Zdieľať beh {km} km z {date}',
       'runs.savedShare':'Uložené. Chceš sa pochváliť?',
       'c.delete':'Zmazať', 'c.loading':'Načítavam…',
-      'photo.label':'Fotka alebo video (nepovinné)', 'edit.title':'Upraviť beh', 'edit.aria':'Upraviť beh {km} km z {date}', 'edit.saved':'Beh je upravený.', 'edit.fail':'Beh sa nepodarilo upraviť.', 'video.add':'Pridať video', 'video.change':'Zmeniť video', 'video.alt':'Video z behu', 'video.removeFull':'Odstrániť video',
+      'photo.label':'Fotka alebo video (nepovinné)',
+      'route.title':'Trasa na najbližší tréning', 'route.km':'Dĺžka okruhu (km)', 'route.go':'Navrhnúť okruh', 'route.again':'Iný okruh', 'route.gpx':'Stiahnuť GPX', 'route.gmaps':'Mapy Google',
+      'route.mapAria':'Mapa navrhnutého okruhu', 'route.attr':'Mapa © prispievatelia OpenStreetMap, trasy FOSSGIS / OSRM. Trasu si pred behom skontroluj, nie každý chodník je vhodný.',
+      'route.next':'Najbližší tréning: {w}, {day}. Okruh začne tam, kde práve si.', 'route.noPlan':'Nemáš naplánovaný tréning, okruh navrhneme podľa zadanej dĺžky.',
+      'route.locating':'Zisťujem tvoju polohu…', 'route.planning':'Hľadám okruh po chodníkoch…', 'route.noGeo':'Polohu sa nepodarilo zistiť. Povoľ v Safari prístup k polohe (Nastavenia → Safari → Poloha) a skús znova.',
+      'route.fail':'Okruh sa nepodarilo naplánovať. Skús to o chvíľu alebo zmeň dĺžku.', 'route.badKm':'Zadaj dĺžku od 1 do 45 km.', 'route.len':'dĺžka', 'route.time':'odhad pri tempe {p} /km',
+      'route.diff':'Najbližší okruh, aký sa dal nájsť, má {km} km.', 'route.gpxDone':'GPX súbor je stiahnutý. Môžeš ho importovať napríklad do Garmin Connect ako trasu.', 'edit.title':'Upraviť beh', 'edit.aria':'Upraviť beh {km} km z {date}', 'edit.saved':'Beh je upravený.', 'edit.fail':'Beh sa nepodarilo upraviť.', 'video.add':'Pridať video', 'video.change':'Zmeniť video', 'video.alt':'Video z behu', 'video.removeFull':'Odstrániť video',
       'video.tooBig':'Video je príliš veľké. Najviac {mb} MB, skús kratšie video (do 1 minúty).', 'video.tooLong':'Video môže mať najviac {s} sekúnd.', 'video.uploading':'Nahrávam video…', 'video.fail':'Video sa nepodarilo nahrať.',
       'wall.feed':'Behy členov', 'wall.more':'Načítať staršie', 'wall.feedEmpty':'Zatiaľ žiadne behy. Buď prvý!', 'wall.pace':'tempo', 'wall.dist':'vzdialenosť', 'wall.time':'čas', 'photo.add':'Pridať fotku', 'photo.change':'Zmeniť fotku', 'photo.remove':'Odstrániť', 'photo.removeFull':'Odstrániť fotku',
       'photo.alt':'Fotka z behu', 'photo.fail':'Fotku sa nepodarilo spracovať. Skús inú.', 'photo.upFail':'Beh je uložený, ale fotku sa nepodarilo nahrať.',
@@ -897,7 +929,13 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
       'runs.empty':'No runs yet. Add your first one above.', 'runs.delAria':'Delete {km} km run from {date}', 'runs.shareAria':'Share {km} km run from {date}',
       'runs.savedShare':'Saved. Want to show it off?',
       'c.delete':'Delete', 'c.loading':'Loading…',
-      'photo.label':'Photo or video (optional)', 'edit.title':'Edit run', 'edit.aria':'Edit {km} km run from {date}', 'edit.saved':'Run updated.', 'edit.fail':'Couldn’t update the run.', 'video.add':'Add video', 'video.change':'Change video', 'video.alt':'Run video', 'video.removeFull':'Remove video',
+      'photo.label':'Photo or video (optional)',
+      'route.title':'Route for your next workout', 'route.km':'Loop length (km)', 'route.go':'Suggest a loop', 'route.again':'Another loop', 'route.gpx':'Download GPX', 'route.gmaps':'Google Maps',
+      'route.mapAria':'Map of the suggested loop', 'route.attr':'Map © OpenStreetMap contributors, routing FOSSGIS / OSRM. Check the route before you run; not every path is suitable.',
+      'route.next':'Next workout: {w}, {day}. The loop starts where you are now.', 'route.noPlan':'No workout planned, so we’ll suggest a loop of the length you enter.',
+      'route.locating':'Finding your location…', 'route.planning':'Looking for a loop along paths…', 'route.noGeo':'Couldn’t get your location. Allow location access in Safari (Settings → Safari → Location) and try again.',
+      'route.fail':'Couldn’t plan a loop. Try again in a moment or change the length.', 'route.badKm':'Enter a length from 1 to 45 km.', 'route.len':'length', 'route.time':'estimate at {p} /km',
+      'route.diff':'The closest loop we could find is {km} km.', 'route.gpxDone':'GPX file downloaded. You can import it as a course, for example into Garmin Connect.', 'edit.title':'Edit run', 'edit.aria':'Edit {km} km run from {date}', 'edit.saved':'Run updated.', 'edit.fail':'Couldn’t update the run.', 'video.add':'Add video', 'video.change':'Change video', 'video.alt':'Run video', 'video.removeFull':'Remove video',
       'video.tooBig':'The video is too large. Max {mb} MB, try a shorter clip (under 1 minute).', 'video.tooLong':'The video can be at most {s} seconds long.', 'video.uploading':'Uploading video…', 'video.fail':'Couldn’t upload the video.',
       'wall.feed':'Members’ runs', 'wall.more':'Load older', 'wall.feedEmpty':'No runs yet. Be the first!', 'wall.pace':'pace', 'wall.dist':'distance', 'wall.time':'time', 'photo.add':'Add photo', 'photo.change':'Change photo', 'photo.remove':'Remove', 'photo.removeFull':'Remove photo',
       'photo.alt':'Run photo', 'photo.fail':'Couldn’t process the photo. Try another one.', 'photo.upFail':'Run saved, but the photo couldn’t be uploaded.',
@@ -1155,7 +1193,7 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
     if(name==='profile'){ renderSwatches(); renderLook(); }
     if(name==='chat') openChat();
     if(name==='wall') loadWall();
-    if(name==='runs') renderRuns();
+    if(name==='runs'){ renderRuns(); renderRouteCard(); }
   }
   document.querySelectorAll('#tabs button').forEach(b => b.addEventListener('click', ()=> showTab(b.dataset.tab)));
 
@@ -1206,7 +1244,7 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
     $('date').value = iso(today0());
     await Promise.all([loadProfile(), loadGroups(), loadRuns(), loadPlanData()]);
     const joined = await consumeJoin();
-    renderPlanTab(); showTab(joined ? 'group' : S.tab);
+    renderPlanTab(); renderRouteCard(); showTab(joined ? 'group' : S.tab);
     if(S.group) subscribeChat(S.group);
     hideBoot();
   }
@@ -2742,6 +2780,123 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
     }catch(err){ clearPhoto(); toast(t('photo.fail')); }
   }
   $('photoDel').addEventListener('click', clearVideo);
+
+  // ================= plánovanie okruhu na mape =================
+  const RT2 = { map:null, layer:null, start:null, res:null, busy:false, lastReq:0 };
+  function nextWorkout(){
+    const tIso = iso(today0()), done = new Set(S.runs.map(r => r.run_date));
+    return S.planned.find(p => p.workout_date >= tIso && !(p.workout_date === tIso && done.has(tIso))) || null;
+  }
+  function renderRouteCard(){
+    const p = nextWorkout();
+    if(p){
+      const d = parse(p.workout_date), tIso = iso(today0());
+      const day = p.workout_date === tIso ? t('plan.today').toLowerCase() : daysLong()[dayIdx(d)] + ' ' + fmtShort(d);
+      $('routeNext').textContent = t('route.next', { w: wTitle(p) + ' ' + fmtKm(p.distance_km) + ' km', day });
+    } else $('routeNext').textContent = t('route.noPlan');
+    if(!$('routeKm').dataset.touched){
+      const km = p ? Number(p.distance_km) : 5;
+      $('routeKm').value = LANG === 'sk' ? String(km).replace('.', ',') : String(km);
+    }
+  }
+  $('routeKm').addEventListener('input', () => { $('routeKm').dataset.touched = '1'; });
+  function loadLeaflet(){
+    if(window.L) return Promise.resolve();
+    return new Promise((res, rej) => {
+      const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css'; document.head.appendChild(css);
+      const js = document.createElement('script'); js.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js'; js.onload = res; js.onerror = rej; document.head.appendChild(js);
+    });
+  }
+  function getPosition(){
+    return new Promise((res, rej) => {
+      if(!navigator.geolocation) return rej(new Error('geo'));
+      navigator.geolocation.getCurrentPosition(p => res([p.coords.latitude, p.coords.longitude]), rej, { enableHighAccuracy:true, timeout:15000, maximumAge:60000 });
+    });
+  }
+  // bod vo vzdialenosti km a smere (stupne) od [lat, lng]
+  function offset([lat, lng], km, deg){
+    const R = 6371, br = deg*Math.PI/180, d = km/R, la = lat*Math.PI/180, lo = lng*Math.PI/180;
+    const la2 = Math.asin(Math.sin(la)*Math.cos(d) + Math.cos(la)*Math.sin(d)*Math.cos(br));
+    const lo2 = lo + Math.atan2(Math.sin(br)*Math.sin(d)*Math.cos(la), Math.cos(d) - Math.sin(la)*Math.sin(la2));
+    return [la2*180/Math.PI, lo2*180/Math.PI];
+  }
+  async function osrm(points){
+    const wait = 1100 - (Date.now() - RT2.lastReq); if(wait > 0) await new Promise(r => setTimeout(r, wait));
+    RT2.lastReq = Date.now();
+    const coords = points.map(([la, lo]) => lo.toFixed(6) + ',' + la.toFixed(6)).join(';');
+    const r = await fetch('https://routing.openstreetmap.de/routed-foot/route/v1/driving/' + coords + '?overview=full&geometries=geojson&continue_straight=false');
+    if(!r.ok) throw new Error('route ' + r.status);
+    const j = await r.json();
+    if(j.code !== 'Ok' || !j.routes || !j.routes.length) throw new Error('route');
+    return { km: j.routes[0].distance/1000, line: j.routes[0].geometry.coordinates.map(([lo, la]) => [la, lo]), wps: (j.waypoints || []).map(w => [w.location[1], w.location[0]]) };
+  }
+  async function planLoop(start, km){
+    const bearing = Math.random()*360;
+    let radius = km / (2*Math.PI) / 1.25, best = null;
+    for(let i = 0; i < 3; i++){
+      const center = offset(start, radius, bearing);
+      const back = (bearing + 180) % 360;
+      const pts = [start, offset(center, radius, back + 90), offset(center, radius, back + 180), offset(center, radius, back + 270), start];
+      const r = await osrm(pts);
+      if(!best || Math.abs(r.km - km) < Math.abs(best.km - km)) best = r;
+      if(Math.abs(r.km - km) / km <= 0.07) break;
+      radius *= Math.max(0.5, Math.min(1.8, km / r.km));
+    }
+    return best;
+  }
+  async function runPlanner(){
+    if(RT2.busy) return;
+    const msg = $('routeMsg'); msg.className = 'msg'; msg.textContent = '';
+    const km = parseKm($('routeKm').value);
+    if(!km || km < 1 || km > 45){ msg.textContent = t('route.badKm'); return; }
+    RT2.busy = true; $('routeGo').disabled = true; $('routeAgain').disabled = true;
+    try{
+      msg.className = 'msg ok'; msg.textContent = t('route.locating');
+      try{ RT2.start = await getPosition(); }catch(e){ msg.className = 'msg'; msg.textContent = t('route.noGeo'); return; }
+      msg.textContent = t('route.planning');
+      let res;
+      try{ [res] = await Promise.all([planLoop(RT2.start, km), loadLeaflet()]); }catch(e){ msg.className = 'msg'; msg.textContent = t('route.fail'); return; }
+      RT2.res = res; msg.textContent = '';
+      showRoute(res, km);
+    } finally { RT2.busy = false; $('routeGo').disabled = false; $('routeAgain').disabled = false; }
+  }
+  function showRoute(res, km){
+    $('routeOut').hidden = false;
+    const col = myColor();
+    if(!RT2.map){
+      RT2.map = L.map('routeMap', { zoomControl:true, attributionControl:true });
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19, attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' }).addTo(RT2.map);
+    }
+    if(RT2.layer) RT2.layer.remove();
+    RT2.layer = L.layerGroup().addTo(RT2.map);
+    const line = L.polyline(res.line, { color: col, weight:5, opacity:0.9 }).addTo(RT2.layer);
+    L.circleMarker(RT2.start, { radius:8, color:'#0E2738', weight:2, fillColor:'#FFFFFF', fillOpacity:1 }).addTo(RT2.layer).bindTooltip('Start');
+    setTimeout(() => { RT2.map.invalidateSize(); RT2.map.fitBounds(line.getBounds(), { padding:[18,18] }); }, 60);
+    const meta = $('routeMeta'); meta.textContent = '';
+    const p = nextWorkout(), pace = p ? (p.pace_min_sec + p.pace_max_sec)/2 : null;
+    const a = el('span'); a.append(el('b', null, fmtKm(res.km)), document.createTextNode('km')); meta.appendChild(a);
+    if(pace){ const b = el('span'); b.append(el('b', null, fmtDur(Math.round(res.km*pace))), document.createTextNode(t('route.time',{ p: fmtPace(pace) }))); meta.appendChild(b); }
+    if(Math.abs(res.km - km)/km > 0.07){ const m = $('routeMsg'); m.className = 'msg'; m.textContent = t('route.diff',{ km: fmtKm(res.km) }); }
+  }
+  $('routeGo').addEventListener('click', runPlanner);
+  $('routeAgain').addEventListener('click', runPlanner);
+  $('routeGpx').addEventListener('click', () => {
+    if(!RT2.res) return;
+    const name = 'Maltese Pacer ' + fmtKm(RT2.res.km) + ' km';
+    const pts = RT2.res.line.map(([la, lo]) => '<trkpt lat="' + la.toFixed(6) + '" lon="' + lo.toFixed(6) + '"></trkpt>').join('\n');
+    const gpx = '<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="The Maltese Pacer" xmlns="http://www.topografix.com/GPX/1/1">\n<metadata><name>' + name + '</name></metadata>\n<trk><name>' + name + '</name><trkseg>\n' + pts + '\n</trkseg></trk>\n</gpx>\n';
+    const url = URL.createObjectURL(new Blob([gpx], { type:'application/gpx+xml' }));
+    const a = document.createElement('a'); a.href = url; a.download = 'okruh-' + String(RT2.res.km.toFixed(1)).replace('.', '-') + 'km.gpx';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 60000);
+    toast(t('route.gpxDone'));
+  });
+  $('routeGmaps').addEventListener('click', () => {
+    if(!RT2.res) return;
+    const f = ([la, lo]) => la.toFixed(6) + ',' + lo.toFixed(6);
+    const w = RT2.res.wps.slice(1, -1).map(f).join('|');
+    const url = 'https://www.google.com/maps/dir/?api=1&travelmode=walking&origin=' + f(RT2.start) + '&destination=' + f(RT2.start) + (w ? '&waypoints=' + encodeURIComponent(w) : '');
+    window.open(url, '_blank', 'noopener');
+  });
 
   // ================= úprava behu =================
   function openEditRun(r){
