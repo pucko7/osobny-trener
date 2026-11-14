@@ -2765,7 +2765,9 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
       ki.addEventListener('input', upd); upd();
       let rpe = r.rpe || null;
       const rw = el('div'); rw.appendChild(el('span','lbl', t('rpe.label'))); const rp = el('div','pills p5'); rw.appendChild(rp); f.appendChild(rw);
-      const paintR = () => { rp.textContent = ''; for(let n=1;n<=10;n++){ const x = el('button','pill', String(n)); x.type='button'; x.setAttribute('aria-pressed', rpe===n?'true':'false'); x.addEventListener('click', ()=>{ rpe = rpe===n ? null : n; paintR(); }); rp.appendChild(x); } };
+      const rh = el('p','hint'); rh.style.marginTop = '4px'; rw.appendChild(rh);
+      const paintR = () => { rp.textContent = ''; for(let n=1;n<=10;n++){ const x = el('button','pill', String(n)); x.type='button'; x.setAttribute('aria-pressed', rpe===n?'true':'false'); x.setAttribute('aria-label', n+' – '+rpeWord(n)); x.addEventListener('click', ()=>{ rpe = rpe===n ? null : n; paintR(); }); rp.appendChild(x); }
+        rh.textContent = rpe ? rpe+'/10: '+rpeWord(rpe) : t('rpe.scale'); };
       paintR();
       const ni = el('input'); ni.type = 'text'; ni.id = 'eNote'; ni.maxLength = 80; ni.value = r.note || ''; ni.autocomplete = 'off';
       f.appendChild(field(t('runs.note'), ni));
