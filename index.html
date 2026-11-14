@@ -304,13 +304,11 @@ nav.tabs svg{width:21px;height:21px}
 .post .nums{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px;color:var(--muted)}
 .post .nums b{font-family:var(--display);font-size:22px;font-weight:700;color:var(--ink);margin-right:3px}
 .post .nums .rpe b{color:var(--rc,var(--ink))}
-.rmap{height:280px;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#E8EEF0;z-index:0;position:relative}
-.rmap .leaflet-tile-pane{filter:none}
+.rmap{height:280px;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#E8EEF0;position:relative;cursor:pointer}
 .rmeta{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px;color:var(--muted)}
 .rmeta b{font-family:var(--display);font-size:24px;color:var(--ink);margin-right:3px}
 .rbtns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .rbtns .ghost{padding:0 6px;font-size:14px}
-.leaflet-container{font:inherit}
 .post .note{margin:0;font-size:14px;color:var(--muted);overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .post .media{display:flex;flex-direction:column;gap:6px;flex:none}
 .post .media .thumb{margin-top:0;width:84px;height:84px}
@@ -2801,19 +2799,6 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
     }
   }
   $('routeKm').addEventListener('input', () => { $('routeKm').dataset.touched = '1'; });
-  function loadLeaflet(){
-    if(window.L && document.getElementById('leafletCss')) return Promise.resolve();
-    const base = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/';
-    const css = new Promise((res, rej) => {
-      if(document.getElementById('leafletCss')) return res();
-      const l = document.createElement('link'); l.id = 'leafletCss'; l.rel = 'stylesheet'; l.href = base + 'leaflet.css';
-      l.onload = res; l.onerror = rej; document.head.appendChild(l);
-    });
-    const js = window.L ? Promise.resolve() : new Promise((res, rej) => {
-      const x = document.createElement('script'); x.src = base + 'leaflet.js'; x.onload = res; x.onerror = rej; document.head.appendChild(x);
-    });
-    return Promise.all([css, js]);
-  }
   function getPosition(){
     return new Promise((res, rej) => {
       if(!navigator.geolocation) return rej(new Error('geo'));
@@ -2862,33 +2847,61 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
       try{ RT2.start = await getPosition(); }catch(e){ msg.className = 'msg'; msg.textContent = t('route.noGeo'); return; }
       msg.textContent = t('route.planning');
       let res;
-      try{ [res] = await Promise.all([planLoop(RT2.start, km), loadLeaflet()]); }catch(e){ msg.className = 'msg'; msg.textContent = t('route.fail'); return; }
+      try{ res = await planLoop(RT2.start, km); }catch(e){ msg.className = 'msg'; msg.textContent = t('route.fail'); return; }
       RT2.res = res; msg.textContent = '';
       showRoute(res, km);
     } finally { RT2.busy = false; $('routeGo').disabled = false; $('routeAgain').disabled = false; }
   }
+  function drawStaticMap(box, line, start, color){
+    box.textContent = '';
+    const W = Math.max(200, box.clientWidth || 340), H = box.clientHeight || 280;
+    const proj = (la, lo, z) => { const n = 256 * Math.pow(2, z), s1 = Math.sin(la*Math.PI/180);
+      return [ (lo + 180) / 360 * n, (0.5 - Math.log((1 + s1) / (1 - s1)) / (4*Math.PI)) * n ]; };
+    let z = 17;
+    for(; z > 3; z--){
+      const ps = line.map(([la, lo]) => proj(la, lo, z));
+      const xs = ps.map(p => p[0]), ys = ps.map(p => p[1]);
+      if((Math.max(...xs) - Math.min(...xs)) * 1.15 <= W && (Math.max(...ys) - Math.min(...ys)) * 1.15 <= H) break;
+    }
+    const ps = line.map(([la, lo]) => proj(la, lo, z));
+    const xs = ps.map(p => p[0]), ys = ps.map(p => p[1]);
+    const cx = (Math.min(...xs) + Math.max(...xs)) / 2, cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+    const ox = cx - W/2, oy = cy - H/2;
+    // na Retina displejoch použijeme dlaždice o úroveň bližšie v polovičnej veľkosti
+    const hi = (window.devicePixelRatio || 1) > 1 && z < 18, tz = hi ? z + 1 : z, ts = hi ? 128 : 256, k = hi ? 2 : 1;
+    const nTiles = Math.pow(2, tz);
+    const tiles = el('div'); tiles.style.cssText = 'position:absolute;inset:0;overflow:hidden';
+    for(let tx = Math.floor(ox*k/256); tx <= Math.floor((ox+W)*k/256); tx++){
+      for(let ty = Math.floor(oy*k/256); ty <= Math.floor((oy+H)*k/256); ty++){
+        if(ty < 0 || ty >= nTiles) continue;
+        const wx = ((tx % nTiles) + nTiles) % nTiles;
+        const img = new Image(); img.alt = ''; img.decoding = 'async';
+        img.style.cssText = 'position:absolute;width:'+ts+'px;height:'+ts+'px;left:'+(tx*ts - ox)+'px;top:'+(ty*ts - oy)+'px';
+        img.onerror = () => { if(!img.dataset.fb){ img.dataset.fb = '1'; img.src = 'https://a.basemaps.cartocdn.com/rastertiles/voyager/'+tz+'/'+wx+'/'+ty+'.png'; } else img.remove(); };
+        img.src = 'https://tile.openstreetmap.org/'+tz+'/'+wx+'/'+ty+'.png';
+        tiles.appendChild(img);
+      }
+    }
+    box.appendChild(tiles);
+    const NS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(NS, 'svg'); svg.setAttribute('viewBox', '0 0 '+W+' '+H); svg.setAttribute('aria-hidden','true');
+    svg.style.cssText = 'position:absolute;inset:0;width:100%;height:100%';
+    const pts = ps.map(([x, y]) => (x-ox).toFixed(1)+','+(y-oy).toFixed(1)).join(' ');
+    const pl = (stroke, w, op) => { const e = document.createElementNS(NS, 'polyline'); e.setAttribute('points', pts); e.setAttribute('fill','none'); e.setAttribute('stroke', stroke);
+      e.setAttribute('stroke-width', w); e.setAttribute('stroke-linejoin','round'); e.setAttribute('stroke-linecap','round'); e.setAttribute('opacity', op); svg.appendChild(e); };
+    pl('#0E2738', 9, 0.55); pl(color, 5, 1);
+    const [sx, sy] = proj(start[0], start[1], z);
+    const c = document.createElementNS(NS, 'circle'); c.setAttribute('cx', (sx-ox).toFixed(1)); c.setAttribute('cy', (sy-oy).toFixed(1)); c.setAttribute('r', 8);
+    c.setAttribute('fill', '#FFFFFF'); c.setAttribute('stroke', '#0E2738'); c.setAttribute('stroke-width', 3); svg.appendChild(c);
+    box.appendChild(svg);
+    const at = el('span', null, '© OpenStreetMap'); at.style.cssText = 'position:absolute;right:4px;bottom:3px;font-size:10px;background:rgba(255,255,255,.8);color:#333;padding:0 4px;border-radius:3px';
+    box.appendChild(at);
+  }
   function showRoute(res, km){
     $('routeOut').hidden = false;
-    const col = myColor();
-    if(!RT2.map){
-      RT2.map = L.map('routeMap', { zoomControl:true, attributionControl:true }).setView(RT2.start, 14);
-      const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19, attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' });
-      let errs = 0, switched = false;
-      osm.on('tileerror', () => {
-        if(switched || ++errs < 3) return;
-        switched = true; RT2.map.removeLayer(osm);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom:19, subdomains:'abcd',
-          attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/attributions">CARTO</a>' }).addTo(RT2.map);
-      });
-      osm.addTo(RT2.map);
-    } else RT2.map.setView(RT2.start, 14);
-    if(RT2.layer) RT2.layer.remove();
-    RT2.layer = L.layerGroup().addTo(RT2.map);
-    L.polyline(res.line, { color:'#0E2738', weight:9, opacity:0.55 }).addTo(RT2.layer);
-    const line = L.polyline(res.line, { color: col, weight:5, opacity:1 }).addTo(RT2.layer);
-    L.circleMarker(RT2.start, { radius:8, color:'#0E2738', weight:2, fillColor:'#FFFFFF', fillOpacity:1 }).addTo(RT2.layer).bindTooltip('Start');
-    const fit = () => { try{ RT2.map.invalidateSize(); const bd = line.getBounds(); if(bd.isValid()) RT2.map.fitBounds(bd, { padding:[18,18] }); }catch(e){} };
-    requestAnimationFrame(() => requestAnimationFrame(fit)); setTimeout(fit, 350);
+    const box = $('routeMap');
+    requestAnimationFrame(() => drawStaticMap(box, res.line, RT2.start, myColor()));
+    box.onclick = () => $('routeGmaps').click();
     const meta = $('routeMeta'); meta.textContent = '';
     const p = nextWorkout(), pace = p ? (p.pace_min_sec + p.pace_max_sec)/2 : null;
     const a = el('span'); a.append(el('b', null, fmtKm(res.km)), document.createTextNode('km')); meta.appendChild(a);
