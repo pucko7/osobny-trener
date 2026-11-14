@@ -296,15 +296,16 @@ nav.tabs svg{width:21px;height:21px}
 .shame{border:2px solid var(--red)}
 .shame h2{color:var(--red)}
 .chips2{display:flex;flex-wrap:wrap;gap:6px}
-.post{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
-.post .ph{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px 6px}
-.post .when{font-size:13px;color:var(--muted);white-space:nowrap}
-.post .nums{display:flex;gap:18px;padding:0 14px 10px}
-.post .nums b{font-family:var(--display);font-size:28px;font-weight:700;line-height:1;display:block}
-.post .nums span{font-size:12px;color:var(--muted)}
-.post .note{padding:0 14px 12px;font-size:15px;overflow-wrap:anywhere}
-.post .media img,.post .media video{display:block;width:100%;max-height:520px;object-fit:cover;background:#000}
-.post .media video{object-fit:contain}
+.post{display:flex;gap:12px;align-items:stretch;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--c,var(--sea));border-radius:14px;padding:10px 12px}
+.post .pb{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.post .ph{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.post .ph .nm{font-weight:600;min-width:0}
+.post .when{font-size:12px;color:var(--muted);white-space:nowrap}
+.post .nums{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px;color:var(--muted)}
+.post .nums b{font-family:var(--display);font-size:22px;font-weight:700;color:var(--ink);margin-right:3px}
+.post .note{margin:0;font-size:14px;color:var(--muted);overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.post .media{display:flex;flex-direction:column;gap:6px;flex:none}
+.post .media .thumb{margin-top:0;width:84px;height:84px}
 .vbadge{position:absolute;left:6px;bottom:6px;background:rgba(0,0,0,.6);color:#fff;font-size:11px;border-radius:6px;padding:1px 6px}
 .thumb{position:relative}
 
@@ -2765,25 +2766,26 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
   }
   $('wallMore').addEventListener('click', () => loadWallFeed(S.group, false));
   function postCard(r, m){
-    const km = Number(r.distance_km), me = r.user_id === S.me.id;
-    const c = el('article','post');
+    const km = Number(r.distance_km), me = r.user_id === S.me.id, col = m ? m.color : defaultColor(r.user_id);
+    const c = el('article','post'); c.style.setProperty('--c', col);
+    const body = el('div','pb');
     const head = el('div','ph');
-    head.append(nameWithDot((m ? m.name : '') + (me ? ' ' + t('grp.me') : ''), m ? m.color : defaultColor(r.user_id)), el('span','when', fmtDate(r.run_date)));
-    head.firstChild.style.fontWeight = '600';
-    c.appendChild(head);
+    head.append(nameWithDot((m ? m.name : '') + (me ? ' ' + t('grp.me') : ''), col), el('span','when', fmtDate(r.run_date)));
+    body.appendChild(head);
     const nums = el('div','nums');
-    [[fmtKm(km) + ' km', t('wall.dist')], [fmtPace(r.duration_sec / km) + ' /km', t('wall.pace')], [fmtDur(r.duration_sec), t('wall.time')]].forEach(([v, l]) => { const d = el('div'); d.append(el('b', null, v), el('span', null, l)); nums.appendChild(d); });
-    c.appendChild(nums);
-    if(r.note) c.appendChild(el('p','note', r.note));
-    if(r.video_path){ const md = el('div','media'); const v = mediaVideo(r.video_path); v.className = ''; md.appendChild(v); c.appendChild(md); }
-    if(r.photo_path){
-      const md = el('div','media'); const img = el('img'); img.alt = t('photo.alt'); img.loading = 'lazy';
-      photoUrl(r.photo_path).then(u => { if(u) img.src = u; });
-      img.style.cursor = 'pointer'; img.addEventListener('click', () => openPhoto(r.photo_path, null));
-      md.appendChild(img); c.appendChild(md);
+    [[fmtKm(km), 'km'], [fmtPace(r.duration_sec / km), '/km'], [fmtDur(r.duration_sec), '']].forEach(([v, u]) => { const d = el('span'); d.append(el('b', null, v), document.createTextNode(u)); nums.appendChild(d); });
+    body.appendChild(nums);
+    if(r.note) body.appendChild(el('p','note', r.note));
+    c.appendChild(body);
+    if(r.photo_path || r.video_path){
+      const md = el('div','media');
+      if(r.video_path) md.appendChild(videoThumb(r.video_path, false));
+      if(r.photo_path) md.appendChild(photoThumb(r.photo_path, false));
+      c.appendChild(md);
     }
     return c;
   }
+
 
   // ================= behy =================
   const RT = makeTimeField($('runTime'), [
