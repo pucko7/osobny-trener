@@ -2871,14 +2871,24 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
     $('routeOut').hidden = false;
     const col = myColor();
     if(!RT2.map){
-      RT2.map = L.map('routeMap', { zoomControl:true, attributionControl:true });
-      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19, attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' }).addTo(RT2.map);
-    }
+      RT2.map = L.map('routeMap', { zoomControl:true, attributionControl:true }).setView(RT2.start, 14);
+      const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19, attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' });
+      let errs = 0, switched = false;
+      osm.on('tileerror', () => {
+        if(switched || ++errs < 3) return;
+        switched = true; RT2.map.removeLayer(osm);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom:19, subdomains:'abcd',
+          attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/attributions">CARTO</a>' }).addTo(RT2.map);
+      });
+      osm.addTo(RT2.map);
+    } else RT2.map.setView(RT2.start, 14);
     if(RT2.layer) RT2.layer.remove();
     RT2.layer = L.layerGroup().addTo(RT2.map);
-    const line = L.polyline(res.line, { color: col, weight:5, opacity:0.9 }).addTo(RT2.layer);
+    L.polyline(res.line, { color:'#0E2738', weight:9, opacity:0.55 }).addTo(RT2.layer);
+    const line = L.polyline(res.line, { color: col, weight:5, opacity:1 }).addTo(RT2.layer);
     L.circleMarker(RT2.start, { radius:8, color:'#0E2738', weight:2, fillColor:'#FFFFFF', fillOpacity:1 }).addTo(RT2.layer).bindTooltip('Start');
-    setTimeout(() => { RT2.map.invalidateSize(); RT2.map.fitBounds(line.getBounds(), { padding:[18,18] }); }, 60);
+    const fit = () => { try{ RT2.map.invalidateSize(); const bd = line.getBounds(); if(bd.isValid()) RT2.map.fitBounds(bd, { padding:[18,18] }); }catch(e){} };
+    requestAnimationFrame(() => requestAnimationFrame(fit)); setTimeout(fit, 350);
     const meta = $('routeMeta'); meta.textContent = '';
     const p = nextWorkout(), pace = p ? (p.pace_min_sec + p.pace_max_sec)/2 : null;
     const a = el('span'); a.append(el('b', null, fmtKm(res.km)), document.createTextNode('km')); meta.appendChild(a);
