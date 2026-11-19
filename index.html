@@ -534,10 +534,11 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
     <section class="card stack" id="routeCard" aria-labelledby="routeTitle" style="gap:10px">
       <h2 id="routeTitle" data-i18n="route.title">Trasa na najbližší tréning</h2>
       <p class="hint" id="routeNext" style="margin:0"></p>
-      <div class="inline" style="align-items:flex-end">
-        <div style="flex:1 1 120px"><label for="routeKm" data-i18n="route.km">Dĺžka okruhu (km)</label><input id="routeKm" type="text" inputmode="decimal" autocomplete="off"></div>
-        <button class="primary" id="routeGo" type="button" style="width:auto;flex:1 1 160px" data-i18n="route.go">Navrhnúť okruh</button>
+      <div class="row">
+        <div><label for="routeKm" data-i18n="route.km">Dĺžka okruhu (km)</label><input id="routeKm" type="text" inputmode="decimal" autocomplete="off"></div>
+        <div><label for="routeGain" data-i18n="route.gain">Max. prevýšenie (m)</label><input id="routeGain" type="text" inputmode="numeric" autocomplete="off" data-i18n-ph="route.gainPh" placeholder="bez limitu"></div>
       </div>
+      <button class="primary" id="routeGo" type="button" data-i18n="route.go">Navrhnúť okruh</button>
       <p class="msg" id="routeMsg" role="status"></p>
       <div id="routeOut" class="stack" style="gap:10px" hidden>
         <div class="rmap" id="routeMap" role="img" data-i18n-aria="route.mapAria" aria-label="Mapa navrhnutého okruhu"></div>
@@ -547,7 +548,7 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
           <button class="ghost" id="routeGpx" type="button" data-i18n="route.gpx">Stiahnuť GPX</button>
           <button class="ghost" id="routeGmaps" type="button" data-i18n="route.gmaps">Mapy Google</button>
         </div>
-        <p class="hint" style="margin:0;font-size:12px" data-i18n="route.attr">Mapa © prispievatelia OpenStreetMap, trasy FOSSGIS / OSRM. Trasu si pred behom skontroluj, nie každý chodník je vhodný.</p>
+        <p class="hint" style="margin:0;font-size:12px" data-i18n="route.attr">Mapa © prispievatelia OpenStreetMap, trasy FOSSGIS / OSRM, výšky Copernicus DEM cez Open-Meteo. Trasu si pred behom skontroluj, nie každý chodník je vhodný.</p>
       </div>
     </section>
 
@@ -821,8 +822,9 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
       'runs.savedShare':'Uložené. Chceš sa pochváliť?',
       'c.delete':'Zmazať', 'c.loading':'Načítavam…',
       'photo.label':'Fotka alebo video (nepovinné)',
-      'route.title':'Trasa na najbližší tréning', 'route.km':'Dĺžka okruhu (km)', 'route.go':'Navrhnúť okruh', 'route.again':'Iný okruh', 'route.gpx':'Stiahnuť GPX', 'route.gmaps':'Mapy Google',
-      'route.mapAria':'Mapa navrhnutého okruhu', 'route.attr':'Mapa © prispievatelia OpenStreetMap, trasy FOSSGIS / OSRM. Trasu si pred behom skontroluj, nie každý chodník je vhodný.',
+      'route.title':'Trasa na najbližší tréning', 'route.gain':'Max. prevýšenie (m)', 'route.gainPh':'bez limitu', 'route.badGain':'Prevýšenie zadaj ako celé číslo v metroch, napríklad 50.',
+      'route.try':'Hľadám okruh {i} z {n}…', 'route.up':'m stúpanie', 'route.noFlat':'Okruh s prevýšením do {max} m sa nenašiel. Ukazujem najrovinatejší: {gain} m.', 'route.noElev':'Prevýšenie sa nepodarilo zistiť, okruh je bez kontroly výšky.', 'route.km':'Dĺžka okruhu (km)', 'route.go':'Navrhnúť okruh', 'route.again':'Iný okruh', 'route.gpx':'Stiahnuť GPX', 'route.gmaps':'Mapy Google',
+      'route.mapAria':'Mapa navrhnutého okruhu', 'route.attr':'Mapa © prispievatelia OpenStreetMap, trasy FOSSGIS / OSRM, výšky Copernicus DEM cez Open-Meteo. Trasu si pred behom skontroluj, nie každý chodník je vhodný.',
       'route.next':'Najbližší tréning: {w}, {day}. Okruh začne tam, kde práve si.', 'route.noPlan':'Nemáš naplánovaný tréning, okruh navrhneme podľa zadanej dĺžky.',
       'route.locating':'Zisťujem tvoju polohu…', 'route.planning':'Hľadám okruh po chodníkoch…', 'route.noGeo':'Polohu sa nepodarilo zistiť. Povoľ v Safari prístup k polohe (Nastavenia → Safari → Poloha) a skús znova.',
       'route.fail':'Okruh sa nepodarilo naplánovať. Skús to o chvíľu alebo zmeň dĺžku.', 'route.badKm':'Zadaj dĺžku od 1 do 45 km.', 'route.len':'dĺžka', 'route.time':'odhad pri tempe {p} /km',
@@ -945,8 +947,9 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
       'runs.savedShare':'Saved. Want to show it off?',
       'c.delete':'Delete', 'c.loading':'Loading…',
       'photo.label':'Photo or video (optional)',
-      'route.title':'Route for your next workout', 'route.km':'Loop length (km)', 'route.go':'Suggest a loop', 'route.again':'Another loop', 'route.gpx':'Download GPX', 'route.gmaps':'Google Maps',
-      'route.mapAria':'Map of the suggested loop', 'route.attr':'Map © OpenStreetMap contributors, routing FOSSGIS / OSRM. Check the route before you run; not every path is suitable.',
+      'route.title':'Route for your next workout', 'route.gain':'Max. elevation gain (m)', 'route.gainPh':'no limit', 'route.badGain':'Enter the elevation gain as a whole number of metres, e.g. 50.',
+      'route.try':'Looking for loop {i} of {n}…', 'route.up':'m climb', 'route.noFlat':'No loop with up to {max} m of climbing found. Showing the flattest one: {gain} m.', 'route.noElev':'Couldn’t get elevation data, so the loop isn’t checked for climbing.', 'route.km':'Loop length (km)', 'route.go':'Suggest a loop', 'route.again':'Another loop', 'route.gpx':'Download GPX', 'route.gmaps':'Google Maps',
+      'route.mapAria':'Map of the suggested loop', 'route.attr':'Map © OpenStreetMap contributors, routing FOSSGIS / OSRM, elevation Copernicus DEM via Open-Meteo. Check the route before you run; not every path is suitable.',
       'route.next':'Next workout: {w}, {day}. The loop starts where you are now.', 'route.noPlan':'No workout planned, so we’ll suggest a loop of the length you enter.',
       'route.locating':'Finding your location…', 'route.planning':'Looking for a loop along paths…', 'route.noGeo':'Couldn’t get your location. Allow location access in Safari (Settings → Safari → Location) and try again.',
       'route.fail':'Couldn’t plan a loop. Try again in a moment or change the length.', 'route.badKm':'Enter a length from 1 to 45 km.', 'route.len':'length', 'route.time':'estimate at {p} /km',
@@ -2839,8 +2842,8 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
     if(j.code !== 'Ok' || !j.routes || !j.routes.length) throw new Error('route');
     return { km: j.routes[0].distance/1000, line: j.routes[0].geometry.coordinates.map(([lo, la]) => [la, lo]), wps: (j.waypoints || []).map(w => [w.location[1], w.location[0]]) };
   }
-  async function planLoop(start, km){
-    const bearing = Math.random()*360;
+  async function planLoop(start, km, bearing0){
+    const bearing = bearing0 != null ? bearing0 : Math.random()*360;
     let radius = km / (2*Math.PI) / 1.25, best = null;
     for(let i = 0; i < 3; i++){
       const center = offset(start, radius, bearing);
@@ -2853,22 +2856,57 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
     }
     return best;
   }
+  function hav(a, b){ const R = 6371000, r = x => x*Math.PI/180; const dl = r(b[0]-a[0]), dn = r(b[1]-a[1]);
+    const h = Math.sin(dl/2)**2 + Math.cos(r(a[0]))*Math.cos(r(b[0]))*Math.sin(dn/2)**2; return 2*R*Math.asin(Math.sqrt(h)); }
+  // stúpanie trasy: 100 rovnomerne rozložených bodov, výšky z Copernicus DEM (Open-Meteo), vyhladené
+  async function routeGain(line){
+    const cum = [0]; for(let i = 1; i < line.length; i++) cum.push(cum[i-1] + hav(line[i-1], line[i]));
+    const total = cum[cum.length-1]; if(!total) return 0;
+    const N = Math.min(100, Math.max(10, Math.round(total/50))), pts = []; let j = 0;
+    for(let k = 0; k < N; k++){
+      const d = total * k/(N-1); while(j < cum.length-2 && cum[j+1] < d) j++;
+      const f = cum[j+1] > cum[j] ? (d - cum[j])/(cum[j+1]-cum[j]) : 0;
+      pts.push([line[j][0] + (line[j+1][0]-line[j][0])*f, line[j][1] + (line[j+1][1]-line[j][1])*f]);
+    }
+    const url = 'https://api.open-meteo.com/v1/elevation?latitude=' + pts.map(p => p[0].toFixed(5)).join(',') + '&longitude=' + pts.map(p => p[1].toFixed(5)).join(',');
+    const r = await fetch(url); if(!r.ok) throw new Error('elev');
+    const j2 = await r.json(), e = j2.elevation; if(!Array.isArray(e) || e.length !== pts.length) throw new Error('elev');
+    const sm = e.map((v, i) => (e[Math.max(0, i-1)] + v + e[Math.min(e.length-1, i+1)]) / 3);
+    let up = 0; for(let i = 1; i < sm.length; i++){ const d = sm[i] - sm[i-1]; if(d > 0) up += d; }
+    return Math.round(up);
+  }
   async function runPlanner(){
     if(RT2.busy) return;
     const msg = $('routeMsg'); msg.className = 'msg'; msg.textContent = '';
     const km = parseKm($('routeKm').value);
     if(!km || km < 1 || km > 45){ msg.textContent = t('route.badKm'); return; }
+    const gv = $('routeGain').value.trim();
+    const maxGain = gv === '' ? null : Number(gv);
+    if(maxGain != null && (!Number.isInteger(maxGain) || maxGain < 0 || maxGain > 3000)){ msg.textContent = t('route.badGain'); return; }
+    try{ localStorage.setItem('mp-route-gain', gv); }catch(e){}
     RT2.busy = true; $('routeGo').disabled = true; $('routeAgain').disabled = true;
     try{
       msg.className = 'msg ok'; msg.textContent = t('route.locating');
       try{ RT2.start = await getPosition(); }catch(e){ msg.className = 'msg'; msg.textContent = t('route.noGeo'); return; }
-      msg.textContent = t('route.planning');
-      let res;
-      try{ res = await planLoop(RT2.start, km); }catch(e){ msg.className = 'msg'; msg.textContent = t('route.fail'); return; }
-      RT2.res = res; msg.textContent = '';
+      const tries = maxGain == null ? 1 : 4, b0 = Math.random()*360;
+      let best = null, ok = null, elevFail = false;
+      for(let i = 0; i < tries && !ok; i++){
+        msg.textContent = tries > 1 ? t('route.try',{ i: i+1, n: tries }) : t('route.planning');
+        let res;
+        try{ res = await planLoop(RT2.start, km, (b0 + i*90) % 360); }catch(e){ continue; }
+        try{ res.gain = await routeGain(res.line); }catch(e){ res.gain = null; elevFail = true; }
+        if(maxGain == null || res.gain == null || res.gain <= maxGain) ok = res;
+        else if(!best || res.gain < best.gain) best = res;
+      }
+      const res = ok || best;
+      if(!res){ msg.className = 'msg'; msg.textContent = t('route.fail'); return; }
+      RT2.res = res; msg.className = 'msg'; msg.textContent = '';
       showRoute(res, km);
+      if(!ok && best){ msg.textContent = t('route.noFlat',{ max: maxGain, gain: best.gain }); }
+      else if(elevFail && maxGain != null){ msg.textContent = t('route.noElev'); }
     } finally { RT2.busy = false; $('routeGo').disabled = false; $('routeAgain').disabled = false; }
   }
+  try{ const g = localStorage.getItem('mp-route-gain'); if(g) $('routeGain').value = g; }catch(e){}
   function drawStaticMap(box, line, start, color){
     box.textContent = '';
     const W = Math.max(200, box.clientWidth || 340), H = box.clientHeight || 280;
@@ -2923,6 +2961,7 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
     const p = nextWorkout(), pace = p ? (p.pace_min_sec + p.pace_max_sec)/2 : null;
     const a = el('span'); a.append(el('b', null, fmtKm(res.km)), document.createTextNode('km')); meta.appendChild(a);
     if(pace){ const b = el('span'); b.append(el('b', null, fmtDur(Math.round(res.km*pace))), document.createTextNode(t('route.time',{ p: fmtPace(pace) }))); meta.appendChild(b); }
+    if(res.gain != null){ const g = el('span'); g.append(el('b', null, '↑ ' + res.gain), document.createTextNode(t('route.up'))); meta.appendChild(g); }
     if(Math.abs(res.km - km)/km > 0.07){ const m = $('routeMsg'); m.className = 'msg'; m.textContent = t('route.diff',{ km: fmtKm(res.km) }); }
   }
   $('routeGo').addEventListener('click', runPlanner);
