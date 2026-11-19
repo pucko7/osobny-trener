@@ -309,6 +309,10 @@ nav.tabs svg{width:21px;height:21px}
 .rmeta b{font-family:var(--display);font-size:24px;color:var(--ink);margin-right:3px}
 .rbtns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .rbtns .ghost{padding:0 6px;font-size:14px}
+.pwwrap{position:relative}
+.pwwrap input{padding-right:52px}
+.pweye{position:absolute;right:2px;top:50%;transform:translateY(-50%);width:44px;height:44px;border:0;background:none;color:var(--muted);display:flex;align-items:center;justify-content:center;border-radius:10px;cursor:pointer}
+.pweye:focus-visible{outline:3px solid var(--sea);outline-offset:-3px}
 .post .note{margin:0;font-size:14px;color:var(--muted);overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .post .media{display:flex;flex-direction:column;gap:6px;flex:none}
 .post .media .thumb{margin-top:0;width:84px;height:84px}
@@ -372,6 +376,7 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
       <div><label for="authPass" data-i18n="auth.pass">Heslo</label><input id="authPass" type="password" autocomplete="current-password" minlength="8"></div>
       <button class="primary" id="authBtn" type="submit">Prihlásiť sa</button>
     </form>
+    <button class="link" id="forgotBtn" type="button" data-i18n="pw.forgot">Zabudnuté heslo?</button>
     <p class="msg" id="authMsg" role="status"></p>
     <button class="link" id="authSwitch" type="button">Nemáš účet? Zaregistruj sa</button>
   </div>
@@ -692,6 +697,7 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
         <span data-i18n="prof.lang">Jazyk</span>
         <div class="lang" role="group" aria-label="Jazyk / Language"><button type="button" data-lang="sk">SK</button><button type="button" data-lang="en">EN</button></div>
       </div>
+      <button class="ghost" id="changePw" type="button" data-i18n="pw.change">Zmeniť heslo</button>
       <button class="ghost" id="logout" type="button" data-i18n="prof.logout">Odhlásiť sa</button>
     </div>
   </section>
@@ -747,7 +753,12 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
   const L = {
     sk: {
       slogan:'Poď sa s nami pripraviť na maratón',
-      'auth.login':'Prihlásenie', 'auth.signup':'Registrácia', 'auth.name':'Meno v rebríčku', 'auth.email':'E-mail', 'auth.pass':'Heslo',
+      'auth.login':'Prihlásenie',
+      'pw.forgot':'Zabudnuté heslo?', 'pw.show':'Zobraziť heslo', 'pw.hide':'Skryť heslo', 'pw.resetTitle':'Obnovenie hesla', 'pw.resetInfo':'Zadaj e-mail, s ktorým si sa registroval. Pošleme ti odkaz na nastavenie nového hesla.',
+      'pw.send':'Poslať odkaz', 'pw.sent':'Ak je e-mail zaregistrovaný, prišiel ti odkaz na obnovenie hesla. Skontroluj aj spam.',
+      'pw.newTitle':'Nové heslo', 'pw.newInfo':'Zadaj nové heslo, aspoň 8 znakov.', 'pw.new':'Nové heslo', 'pw.again':'Nové heslo znova',
+      'pw.mismatch':'Heslá sa nezhodujú.', 'pw.saved':'Heslo je zmenené.', 'pw.fail':'Heslo sa nepodarilo zmeniť. Skús to znova.', 'pw.change':'Zmeniť heslo',
+      'pw.same':'Nové heslo musí byť iné ako to staré.', 'auth.signup':'Registrácia', 'auth.name':'Meno v rebríčku', 'auth.email':'E-mail', 'auth.pass':'Heslo',
       'auth.loginBtn':'Prihlásiť sa', 'auth.signupBtn':'Zaregistrovať sa', 'auth.toSignup':'Nemáš účet? Zaregistruj sa', 'auth.toLogin':'Už máš účet? Prihlás sa',
       'auth.needEmail':'Zadaj e-mail.', 'auth.pwShort':'Heslo musí mať aspoň 8 znakov.', 'auth.needName':'Zadaj meno, ktoré uvidia ostatní v rebríčku.',
       'auth.signupDone':'Hotovo. Potvrď registráciu cez odkaz v e-maile a potom sa prihlás.', 'auth.joinAfter':'Po prihlásení ťa pridáme do skupiny s kódom {code}.',
@@ -867,7 +878,12 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
     },
     en: {
       slogan:'Let’s get marathon-ready together',
-      'auth.login':'Log in', 'auth.signup':'Sign up', 'auth.name':'Name on the leaderboard', 'auth.email':'Email', 'auth.pass':'Password',
+      'auth.login':'Log in',
+      'pw.forgot':'Forgot password?', 'pw.show':'Show password', 'pw.hide':'Hide password', 'pw.resetTitle':'Reset password', 'pw.resetInfo':'Enter the email you signed up with. We’ll send you a link to set a new password.',
+      'pw.send':'Send link', 'pw.sent':'If the email is registered, a reset link is on its way. Check your spam folder too.',
+      'pw.newTitle':'New password', 'pw.newInfo':'Enter a new password, at least 8 characters.', 'pw.new':'New password', 'pw.again':'New password again',
+      'pw.mismatch':'The passwords don’t match.', 'pw.saved':'Password changed.', 'pw.fail':'Couldn’t change the password. Try again.', 'pw.change':'Change password',
+      'pw.same':'The new password must be different from the old one.', 'auth.signup':'Sign up', 'auth.name':'Name on the leaderboard', 'auth.email':'Email', 'auth.pass':'Password',
       'auth.loginBtn':'Log in', 'auth.signupBtn':'Sign up', 'auth.toSignup':'No account yet? Sign up', 'auth.toLogin':'Already have an account? Log in',
       'auth.needEmail':'Enter your email.', 'auth.pwShort':'Password must be at least 8 characters.', 'auth.needName':'Enter the name others will see on the leaderboard.',
       'auth.signupDone':'Done. Confirm your sign-up with the link in the email, then log in.', 'auth.joinAfter':'Once you log in, we’ll add you to the group with code {code}.',
@@ -1231,9 +1247,10 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
   $('logout').addEventListener('click', ()=> sb.auth.signOut());
 
   sb.auth.onAuthStateChange((event, session)=>{
+    if(event === 'PASSWORD_RECOVERY') setTimeout(() => openNewPassword(true), 400);
     const uid = session && session.user ? session.user.id : null;
     if(uid && (!S.me || S.me.id !== uid)){ S.me = session.user; setTimeout(loadAll, 0); }
-    if(!uid){ hideBoot(); S.me = null; $('appView').hidden = true; $('tabs').hidden = true; $('authView').hidden = false; setAuthMode(false); renderJoinNotice(); }
+    if(!uid){ const ap = $('authPass'); ap.type = 'password'; if(ap._eyePaint) ap._eyePaint(); hideBoot(); S.me = null; $('appView').hidden = true; $('tabs').hidden = true; $('authView').hidden = false; setAuthMode(false); renderJoinNotice(); }
   });
 
   // ================= načítanie =================
@@ -2927,6 +2944,73 @@ dialog.sheet::backdrop{background:rgba(8,32,45,.55)}
     const url = 'https://www.google.com/maps/dir/?api=1&travelmode=walking&origin=' + f(RT2.start) + '&destination=' + f(RT2.start) + (w ? '&waypoints=' + encodeURIComponent(w) : '');
     window.open(url, '_blank', 'noopener');
   });
+
+  // ================= heslo: zabudnuté a zmena =================
+  const EYE = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const EYE_OFF = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A9.7 9.7 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.2M6.1 6.1A17 17 0 0 0 2 12s3.5 7 10 7a9.6 9.6 0 0 0 4-.9"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
+  function addEye(input){
+    if(!input || input.parentNode.classList.contains('pwwrap')) return;
+    const w = el('div','pwwrap'); input.parentNode.insertBefore(w, input); w.appendChild(input);
+    const b = el('button','pweye'); b.type = 'button';
+    const paint = () => { const shown = input.type === 'text'; b.innerHTML = shown ? EYE_OFF : EYE; b.setAttribute('aria-label', t(shown ? 'pw.hide' : 'pw.show')); b.setAttribute('aria-pressed', shown ? 'true' : 'false'); };
+    b.addEventListener('click', () => { const pos = input.selectionStart; input.type = input.type === 'password' ? 'text' : 'password'; paint(); input.focus(); try{ input.setSelectionRange(pos, pos); }catch(e){} });
+    w.appendChild(b); paint(); input._eyePaint = paint;
+  }
+  addEye($('authPass'));
+  function pwField(id, label, ac){ const w = el('div'); const l = el('label', null, label); l.htmlFor = id; const i = el('input'); i.id = id; i.type = 'password'; i.autocomplete = ac; i.minLength = 8; w.append(l, i); addEye(i); return [w, i]; }
+  $('forgotBtn').addEventListener('click', () => {
+    openSheet(b => {
+      const h = el('h2', null, t('pw.resetTitle')); h.id = 'sheetTitle'; b.appendChild(h);
+      b.appendChild(el('p','hint', t('pw.resetInfo')));
+      const f = el('form','stack'); f.noValidate = true;
+      const w = el('div'); const l = el('label', null, t('auth.email')); l.htmlFor = 'resetEmail';
+      const i = el('input'); i.id = 'resetEmail'; i.type = 'email'; i.autocomplete = 'email'; i.inputMode = 'email'; i.value = $('authEmail').value.trim();
+      w.append(l, i); f.appendChild(w);
+      const msg = el('p','msg'); msg.setAttribute('role','status');
+      const btns = el('div','sheet-btns');
+      const go = el('button','primary', t('pw.send')); go.type = 'submit';
+      const cls = el('button','ghost', t('d.close')); cls.type = 'button'; cls.addEventListener('click', closeSheet);
+      btns.append(go, cls); f.append(btns, msg); b.appendChild(f);
+      f.addEventListener('submit', async ev => {
+        ev.preventDefault(); msg.className = 'msg'; msg.textContent = '';
+        const email = i.value.trim(); if(!email){ msg.textContent = t('auth.needEmail'); return; }
+        go.disabled = true;
+        const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
+        go.disabled = false;
+        if(error && /rate limit/i.test(error.message || '')){ msg.textContent = t('err.rate'); return; }
+        // z bezpečnostných dôvodov neprezrádzame, či e-mail existuje
+        msg.className = 'msg ok'; msg.textContent = t('pw.sent');
+      });
+      setTimeout(() => i.focus(), 50);
+    });
+  });
+  function openNewPassword(fromEmail){
+    openSheet(b => {
+      const h = el('h2', null, fromEmail ? t('pw.newTitle') : t('pw.change')); h.id = 'sheetTitle'; b.appendChild(h);
+      b.appendChild(el('p','hint', t('pw.newInfo')));
+      const f = el('form','stack'); f.noValidate = true;
+      const [w1, p1] = pwField('newPw1', t('pw.new'), 'new-password');
+      const [w2, p2] = pwField('newPw2', t('pw.again'), 'new-password');
+      f.append(w1, w2);
+      const msg = el('p','msg'); msg.setAttribute('role','status');
+      const btns = el('div','sheet-btns');
+      const go = el('button','primary', t('c.save')); go.type = 'submit';
+      const cls = el('button','ghost', t('c.cancel')); cls.type = 'button'; cls.addEventListener('click', closeSheet);
+      btns.append(go, cls); f.append(btns, msg); b.appendChild(f);
+      f.addEventListener('submit', async ev => {
+        ev.preventDefault(); msg.className = 'msg'; msg.textContent = '';
+        if(p1.value.length < 8){ msg.textContent = t('auth.pwShort'); return; }
+        if(p1.value !== p2.value){ msg.textContent = t('pw.mismatch'); return; }
+        go.disabled = true;
+        const { error } = await sb.auth.updateUser({ password: p1.value });
+        go.disabled = false;
+        if(error){ msg.textContent = /different from the old/i.test(error.message || '') ? t('pw.same') : errText(error, 'pw.fail'); return; }
+        closeSheet(); toast(t('pw.saved'));
+      });
+      setTimeout(() => p1.focus(), 50);
+    });
+  }
+  $('changePw').addEventListener('click', () => openNewPassword(false));
 
   // ================= úprava behu =================
   function openEditRun(r){
